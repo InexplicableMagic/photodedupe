@@ -1,2 +1,2 @@
 # photodedupe
-A command line utility to find duplicate photos
+A command line utility for locating duplicate photos
