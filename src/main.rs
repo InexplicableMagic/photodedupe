@@ -94,7 +94,7 @@ fn debug_mode( matches: &ArgMatches, config : &imagehash::ConfigOptions ) {
 }
 
 fn get_default_config_options() -> imagehash::ConfigOptions {
-	 return imagehash::ConfigOptions { colour_difference_threshold: imagehash::ImageHashAV::DEFAULT_COLOUR_DIFF_THRESHOLD, 
+	return imagehash::ConfigOptions { colour_difference_threshold: imagehash::ImageHashAV::DEFAULT_COLOUR_DIFF_THRESHOLD, 
 												std_dev_threshold : imagehash::ImageHashAV::DEFAULT_STD_DEV_THRESHOLD,
 												alg_flip_threshold : imagehash::ImageHashAV::DEFAULT_ALG_FLIP_THRESHOLD,
 												only_known_file_extensions : true,
@@ -102,7 +102,7 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 												only_list_uniques : false,
 												list_all : false,
 												num_threads : 4,
-												 };
+									};
 }
 
 
@@ -139,6 +139,9 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 
 fn get_command_line_arguments() ->  ArgMatches<'static> {
 		let matches =  App::new("Photo Deduplicator")
+		.author("InexplicableMagic https://github.com/InexplicableMagic")
+		.version("0.1.0")
+		.about("Locates duplicates of photos")
 		.arg(
 			Arg::with_name("duplicates")
 				.long("duplicates")
@@ -147,7 +150,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("d")
 				.required(false)
 				.takes_value(false)
-				.help("List only the detected duplicate images. Excludes the highest resolution version."),
+				.help("List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images."),
 		)
 		.arg(
 			Arg::with_name("uniques")
@@ -398,13 +401,13 @@ fn run_image_hashing( dedup_file_list: HashSet<String>, config : &imagehash::Con
 }
 
 /* 
-	 * Allow hamming distance of 1. Check if flipping a bit in the greyscale hash would cause a match against another hash.
-	 * 
-	 * This iterates through checking a 1 bit change in all 64-bits of each hash and testing it against all the hashes currently in the table.
-	 * 
-	 * I perceived this was faster than testing all images against all images as n*64 < n^2 where n > 64
-	 * However on smaller image sets, less than about 10,000 images doing an n^2 colour check is fast enough
-	 */
+ * Allow hamming distance of 1. Check if flipping a bit in the greyscale hash would cause a match against another hash.
+ * 
+ * This iterates through checking a 1 bit change in all 64-bits of each hash and testing it against all the hashes currently in the table.
+ * 
+ * I perceived this was faster than testing all images against all images as n*64 < n^2 where n > 64
+ * However on smaller image sets, less than about 10,000 images doing an n^2 colour check is fast enough
+ */
 fn hamming_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config : &imagehash::ConfigOptions ){
 	
 	let mut all_hash_codes = HashMap::new();
@@ -484,9 +487,7 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 						}
 						
 					}	
-
 			dgroup +=1;
-
 		}
 	}
 }
@@ -497,21 +498,16 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, fpath: "".to_string() };
 	let mut printed_uniq_header : bool = false;
 	let mut not_first_it = false;
+		
+	let mut num_unique_images : u64 = 0;
+	let mut num_dupe_images : u64 = 0;
 	
-	let mut max_color_diff:u64 = 0;
 	
 	for imagehasher in image_hash_results {
 
 		if not_first_it && imagehasher.dupe_group == last_unique_ih.dupe_group && 
-			last_unique_ih.is_dupe( &imagehasher, &config )  {
-
-			let cf : u64 = last_unique_ih.diff_colour( &imagehasher );
-			if cf > max_color_diff {  max_color_diff = cf; }
-
-			//eprintln!("ColourDiff:{} {} {}",last_unique_ih.diff_colour( &imagehasher ), last_unique_ih.fpath, imagehasher.fpath);
-			
+			last_unique_ih.is_dupe( &imagehasher, &config )  {			
 			if config.list_all {
-				//println!("\tDuplicate: {:x} {}", imagehasher.dupe_group, imagehasher.fpath );
 				println!("\tDuplicate: {}", imagehasher.fpath );
 			}else if config.only_list_duplicates {
 				println!("{}", imagehasher.fpath );
@@ -522,23 +518,22 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 				}
 				println!("\tDuplicate({}x{}): {}", imagehasher.width, imagehasher.height, imagehasher.fpath );
 			}
+			num_dupe_images+=1;
 		}else{
-			
 			printed_uniq_header = false;
 			if config.only_list_uniques || config.list_all {
-				//println!("s:{} {:x} {}", imagehasher.std_dev, imagehasher.dupe_group, imagehasher.fpath );
 				println!("{}", imagehasher.fpath );
 			}
 						
 			last_unique_ih = imagehasher;
-
+			num_unique_images+=1;
 		}
-		
 		not_first_it = true;
-		
 	}
-
-	//eprintln!("Max Colour diff was: {}",max_color_diff );
+	
+	if (!config.only_list_duplicates) && (!config.only_list_uniques) && (!config.list_all) {
+		eprintln!("Unique Images: {} Duplicates: {}", num_unique_images, num_dupe_images);
+	}
 
 }
 
@@ -547,8 +542,8 @@ mod tests {
     use super::*;
     
     //Tests that the n square check identifies three images that should be duplicates as duplicates
-    #[test]
-    fn test_n_square_check() {
+	#[test]
+	fn test_n_square_check() {
 		let best = imagehash::ImageHashAV::new( "unit_test_images/cat1_best.jpg" ).unwrap();
 		let dupe = imagehash::ImageHashAV::new( "unit_test_images/cat1_duplicate_1.jpg" ).unwrap();
 		let dupe2 = imagehash::ImageHashAV::new( "unit_test_images/cat1_duplicate_2.jpg" ).unwrap();
@@ -564,9 +559,9 @@ mod tests {
 		assert_eq!( images[0].dupe_group, images[2].dupe_group, "Images have same dupe group" );
 	}
 	
-	
+	//Tests that when using the hamming method images are identified as duplicates
 	#[test]
-    fn test_hamming() {
+	fn test_hamming() {
 		let best = imagehash::ImageHashAV::new( "unit_test_images/car1_best.jpg" ).unwrap();
 		let dupe = imagehash::ImageHashAV::new( "unit_test_images/car1_duplicate_1.jpg" ).unwrap();
 		let dupe2 = imagehash::ImageHashAV::new( "unit_test_images/car1_duplicate_2.jpg" ).unwrap();
