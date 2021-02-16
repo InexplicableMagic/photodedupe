@@ -13,7 +13,6 @@ use std::sync::mpsc::channel;
 use threadpool::ThreadPool;
 use indicatif::ProgressBar;
 
-
 mod imagehash;
 mod image_error;
 
@@ -32,9 +31,11 @@ fn main() {
 						
 						//Calculate an image hash for each image and image statistics
 						let results = run_image_hashing( dedup_file_list, &config );
-				
-						//Write out the list of duplicates per command line options
-						output_results( results, &config );
+						
+						if results.len() > 0 {
+							//Write out the list of duplicates per command line options
+							output_results( results, &config );
+						}
 					},
 					None => {
 						eprintln!("Didn't find any image files to test");
