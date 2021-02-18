@@ -1,5 +1,5 @@
 # Photodedupe
-Photodedupe is a command line utility for locating duplicate photos irrespective of image resolution, compression settings or file format. It can be used to e.g. identify the highest resolution versions of images or to remove the duplicates. 
+Photodedupe is a command line utility for identifying duplicate photos irrespective of image resolution, compression settings or file format. It compares the photo content visually and does not rely on metadata to perform the de-duplication. Each set of duplicates is sorted by resolution to determine the best copy of each photo found. Photodedupe is multithreaded and can handle large sets of images.
 
 In the example below the image on the right has been exported with a higher JPEG compression level than the image on the left. The two photos may appear visually identical but only about 18% of the pixels are actually the same, therefore traditional hash based file de-duplication methods will not work. Photodedupe can identify both of these images as identical duplicates.
 
@@ -51,6 +51,11 @@ To list only the lower resolution duplicate images, use the ```--duplicates``` o
 
 Note that photodedupe is performing a fuzzy match and is not 100% accurate. It is not advised to delete duplicates without manual inspection.
 
+## Performance
+
+Photodedupe uses four threads by default to process images. The number of threads can be increased using the ``--threads`` option. More threads may actually be used due to further multithreading within the underlying libraries.
+
+Up to 10,000 images all photos found are compared to all others. However after this number of images, the performance of this approach becomes intractable. Photodedupe will then switch to a different algorithm that is less capable of detecting duplicates but can handle larger numbers of images. A warning will be printed to stderr to explain when this occurs.
 
 
 
