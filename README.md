@@ -53,10 +53,12 @@ Note that photodedupe is performing a fuzzy match and is not 100% accurate. It i
 
 ## Performance
 
-Photodedupe uses four threads by default to process images. The number of threads can be increased using the ``--threads`` option. More threads may actually be used due to further multithreading within the underlying libraries.
+Photodedupe uses four threads by default to process images. The number of threads can be increased using the ``--threads`` option. More than the specified number of threads may actually be used due to further multithreading within the underlying libraries.
 
-Up to 10,000 images all photos found are compared to all others. However after this number of images, the performance of this approach becomes intractable. Photodedupe will then switch to a different algorithm that is less capable of detecting duplicates but can handle larger numbers of images. A warning will be printed to stderr to explain when this occurs.
+Up to 10,000 images all photos found are compared to all others. However after this number of images, the performance of this approach starts to become intractable. Photodedupe will then switch to a different algorithm that is less capable of detecting duplicates but can handle much larger numbers of images. A warning will be printed to stderr to explain when this occurs. It is possible to force use of the all to all comparison variation using the ```--force-colour-diff-only``` flag. However this is not advised for large image sets as the performance will decline significantly. 
 
 Photodedupe is not as accurate on vector art or images containing little variance such as very dark photos. Images are tested for variance, where variance is below the threshold where de-duplication is likely to be reliable the images are identified as unique to prevent false positives.
 
 Photodedupe does not detect transformations of images as duplicates. If the image has been significantly rotated or cropped it will be identified as unique.
+
+The internal threshold at which a duplicate is detected can be be tuned using the ```--colour-diff-threshold``` option which accepts an integer between 0 and 49000. The default threshold is 256. Setting this value closer to zero will cause fewer duplicates to be found. At values close to 49000 virtually all images will be declared duplicates.
