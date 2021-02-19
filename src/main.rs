@@ -157,7 +157,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 fn get_command_line_arguments() ->  ArgMatches<'static> {
 		let matches =  App::new("Photo Deduplicator")
 		.author("InexplicableMagic https://github.com/InexplicableMagic")
-		.version("0.1.0")
+		.version("0.2.0")
 		.about("Locates duplicates of photos")
 		.arg(
 			Arg::with_name("duplicates")
@@ -226,6 +226,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
         return matches;
 }
 
+
 fn collate_file_list_any_source( matches: &ArgMatches, config: &imagehash::ConfigOptions ) -> Option<HashSet<String>> {
 	
 	match gather_file_list_from_cmd_line( &matches ) {
@@ -241,6 +242,7 @@ fn collate_file_list_any_source( matches: &ArgMatches, config: &imagehash::Confi
 	
 }
 
+//Read in the list of paths to inspect from stdin
 fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
@@ -268,7 +270,6 @@ fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 
 
 //Read the command line arguments and generate a complete list of files to be traversed
-
 fn gather_file_list_from_cmd_line( matches: &ArgMatches ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
@@ -356,6 +357,7 @@ fn dir_filter(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+//Accepts a list of file paths and returns an ordered list of metadata with possible (but not conformed) duplicates grouped together
 fn run_image_hashing( dedup_file_list: HashSet<String>, config : &imagehash::ConfigOptions ) -> Vec<imagehash::ImageHashAV> {
 	
 	let mut image_hash_results: Vec<imagehash::ImageHashAV> = Vec::new();
@@ -479,7 +481,6 @@ fn hamming_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config 
 
 /*
  * Do an n^2 colour check - all against all check
- * Verifies that each image 
  */
  
 fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config : &imagehash::ConfigOptions ){

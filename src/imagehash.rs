@@ -189,6 +189,7 @@ impl ImageHashAV {
 		return false;
 	}
 	
+	//For each colour channel calculate the stdv of the pixels values and then take the average of the colour channels
 	pub fn calc_std_dev_colour_hash ( &mut self ) {
 		
 		let mut r_pixel_av : f32 = 0.0;
@@ -221,7 +222,6 @@ impl ImageHashAV {
 		
 	}
 	
-		
 	pub fn calc_image_hash(&mut self, fpath: &str ) -> Option<MyImageError> {
 		   
 		match load_image_from_file( fpath ) {
