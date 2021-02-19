@@ -41,7 +41,7 @@ Best(512x341): unit_test_images/cat2_best.jpg
 
 To list every image file found regardless of whether it has a duplicate use the ```--all``` option.
 
-To list only the highest resolution version of each image use the ```--uniques``` option. This option could be used to copy the highest resolution version to a different directory e.g:
+To list only the highest resolution version of each image use the ```--uniques``` option. This option could be used to copy the highest resolution versions to a different directory e.g:
 
 ```photodedupe --uniques dir_of_photos/ | xargs -i cp "{}" best_copies_only_dir/```
 
@@ -57,5 +57,6 @@ Photodedupe uses four threads by default to process images. The number of thread
 
 Up to 10,000 images all photos found are compared to all others. However after this number of images, the performance of this approach becomes intractable. Photodedupe will then switch to a different algorithm that is less capable of detecting duplicates but can handle larger numbers of images. A warning will be printed to stderr to explain when this occurs.
 
+Photodedupe is not as accurate on vector art or images containing little variance such as very dark photos. Images are tested for variance, where variance is below the threshold where de-duplication is likely to be reliable the images are identified as unique to prevent false positives.
 
-
+Photodedupe does not detect transformations of images as duplicates. If the image has been significantly rotated or cropped it will be identified as unique.
