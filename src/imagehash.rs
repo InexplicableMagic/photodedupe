@@ -25,6 +25,7 @@ pub struct ConfigOptions {
 	pub colour_difference_threshold : u64,
 	pub std_dev_threshold : f32,
 	pub alg_flip_threshold : u64,
+	pub alg_colour_diff_only : bool,
 	pub only_known_file_extensions : bool,
 	pub only_list_duplicates : bool,
 	pub only_list_uniques : bool,

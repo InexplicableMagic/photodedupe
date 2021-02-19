@@ -98,6 +98,7 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 	return imagehash::ConfigOptions { colour_difference_threshold: imagehash::ImageHashAV::DEFAULT_COLOUR_DIFF_THRESHOLD, 
 												std_dev_threshold : imagehash::ImageHashAV::DEFAULT_STD_DEV_THRESHOLD,
 												alg_flip_threshold : imagehash::ImageHashAV::DEFAULT_ALG_FLIP_THRESHOLD,
+												alg_colour_diff_only : false,
 												only_known_file_extensions : true,
 												only_list_duplicates : false,
 												only_list_uniques : false,
@@ -114,6 +115,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 	config.only_list_duplicates = matches.is_present("duplicates");
 	config.only_list_uniques = matches.is_present("uniques");
 	config.list_all = matches.is_present("all");
+	config.alg_colour_diff_only = matches.is_present("force_colour_diff_only");
 	
 	if matches.is_present("any-file") {
 		config.only_known_file_extensions = false;
@@ -129,7 +131,21 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 				config.num_threads = num_threads;
 			},
 			Err(e) => {
-				return Err(format!("For the number of threads option (-t): {}",e.to_string()));
+				return Err(format!("Error for the --threads option: {}",e.to_string()));
+			}
+		}
+	}
+	
+	if matches.is_present("colour_diff_threshold") {
+		match value_t!(matches.value_of("colour_diff_threshold"), u32) {
+			Ok(colour_diff_threshold) => {
+				if colour_diff_threshold > 49000 {
+					return Err("colour_diff_threshold must be between 0 - 49000 inclusive.".to_string());
+				}
+				config.colour_difference_threshold = colour_diff_threshold as u64;
+			},
+			Err(e) => {
+				return Err(format!("Error for the colour_diff_threshold option: {}",e.to_string()));
 			}
 		}
 	}
@@ -152,8 +168,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.required(false)
 				.takes_value(false)
 				.help("List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images."),
-		)
-		.arg(
+		).arg(
 			Arg::with_name("uniques")
 				.long("uniques")
 				.conflicts_with("duplicates")
@@ -162,8 +177,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.required(false)
 				.takes_value(false)
 				.help("List only the best (highest resolution) version of each valid image without any duplicates."),
-		)
-		.arg(
+		).arg(
 			Arg::with_name("all")
 				.long("all")
 				.conflicts_with("duplicates")
@@ -180,13 +194,24 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.takes_value(false)
 				.help("Tests every file to see if it might be an image regardless of file extension. Allows image files with no extension."),
 		).arg(
+			Arg::with_name("force_colour_diff_only")
+				.long("force-colour-diff-only")
+				.required(false)
+				.takes_value(false)
+				.help("Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images."),
+		).arg(
 			Arg::with_name("num_threads")
 				.long("threads")
 				.short("t")
 				.required(false)
 				.takes_value(true)
 				.help("Number of threads to use (default is 4)")
-		
+		).arg(
+			Arg::with_name("colour_diff_threshold")
+				.long("colour-diff-threshold")
+				.required(false)
+				.takes_value(true)
+				.help("Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)")
 		).arg(
 			Arg::with_name("debug")
 				.long("debug")
@@ -387,7 +412,7 @@ fn run_image_hashing( dedup_file_list: HashSet<String>, config : &imagehash::Con
 	}
 	
 	//Use this version on small image sets
-	if total_images_successfully_processed <= config.alg_flip_threshold {
+	if (total_images_successfully_processed <= config.alg_flip_threshold) || config.alg_colour_diff_only {
 		colour_n_square_check( &mut image_hash_results, &config );
 	}else{
 		eprintln!("Warn: Using less accurate comparison algorithm due to the number of images.");
