@@ -3,4 +3,9 @@
 
 The latest version is available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases). Builds are available for x86 Linux and Raspberry Pi.
 
-Usage examples can be found in the [ReadMe](https://github.com/InexplicableMagic/photodedupe/blob/main/README.md)
+## Usage
+````
+photodedupe dir_of_images_1/ dir_of_images_2/ dir_of_images_n/
+````
+
+More usage examples can be found in the [ReadMe](https://github.com/InexplicableMagic/photodedupe/blob/main/README.md)
