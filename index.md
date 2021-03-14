@@ -6,7 +6,7 @@ The latest version is available for download from the [releases page](https://gi
 
 ## Usage
 ````
-photodedupe dir_of_images_1/ dir_of_images_2/ dir_of_images_n/
+photodedupe dir_of_images_1/ dir_of_images_n/
 ````
 
 More usage examples can be found in the [ReadMe](https://github.com/InexplicableMagic/photodedupe/blob/main/README.md)
