@@ -4,3 +4,4 @@ title: PhotoDedupe
 description : A command line utility for locating duplicate photos irrespective of image resolution, compression settings or file format.
 tagline: A utility for locating duplicate photos
 keywords: "photodedupe,images,photos,duplicates,deduplication,de-duplication,visual,similar,similarity"
+logo: img/site-logo.jpg
