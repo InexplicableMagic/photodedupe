@@ -1,4 +1,4 @@
-theme: jekyll-theme-modernist
+theme: jekyll-theme-slate
 google_site_verification : Oy9sum8vz_1KL6_GhCVYGyWyRO1Npfh8RzVxhk-OeTs
 title: PhotoDedupe
 description : A command line utility for locating duplicate photos irrespective of image resolution, compression settings or file format.
