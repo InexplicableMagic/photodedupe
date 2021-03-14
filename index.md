@@ -26,4 +26,10 @@ Show only unique photos:
 photodedupe --uniques dir_of_photos/
 ````
 
+Pipe in a list of file paths to images:
+
+````
+find photos/ -name '*.jpg' | photodedupe
+````
+
 Additional usage examples and more infomation can be found in the [ReadMe](https://github.com/InexplicableMagic/photodedupe/blob/main/README.md)
