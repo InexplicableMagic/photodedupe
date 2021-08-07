@@ -7,7 +7,7 @@ In the example below the image on the right has been exported with a higher JPEG
 
 ## Downloads / Builds
 
-Builds of photodedupe for x86 Linux and Raspberry Pi are available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases/tag/v0.2.0).
+Builds of photodedupe for x86 Linux and Raspberry Pi are available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases/).
 
 ## Usage
 
