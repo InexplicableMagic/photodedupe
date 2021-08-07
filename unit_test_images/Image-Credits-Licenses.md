@@ -161,21 +161,41 @@ Author: Arturo de Frias Marques
 https://commons.wikimedia.org/wiki/File:Leopard_Tree_AdF.jpg  
   
 **cat1**  
-Alvesgaspar  
+Author: Alvesgaspar  
 https://commons.wikimedia.org/wiki/File:Cat_November_2010-1a.jpg  
   
 **cat2**  
-Soulwrite Empire  
+Author: Soulwrite Empire  
 https://commons.wikimedia.org/wiki/File:Image_of_a_cat.jpg  
   
 **cat3**  
-Matthieu Riegler  
+Author: Matthieu Riegler  
 https://commons.wikimedia.org/wiki/File:Cat_by_Matthieu_Riegler.JPG  
   
 **cat4**  
-Nikrouz Kianouri  
+Author: Nikrouz Kianouri  
 https://commons.wikimedia.org/wiki/File:Creating_Nikrouz_Cat_Race_(7).jpg  
-  
+
+**oranges**
+Author: Thoken
+https://commons.wikimedia.org/wiki/File:Ambersweet_oranges.jpg
+
+**oranges2**
+Author: Zeynel Cebeci
+https://commons.wikimedia.org/wiki/File:Kozan_orange_variety_01.jpg
+
+**oranges3**
+Author: Andrew Malone
+https://commons.wikimedia.org/wiki/File:Oranges_(356298118).jpg
+
+**oranges4**
+Author: Dmitry Makeev
+https://commons.wikimedia.org/wiki/File:Orange,_orange_peel.jpg
+
+**oranges5**
+Author: Zeynel Cebeci
+https://commons.wikimedia.org/wiki/File:Local_Orange_Variety_of_Kozan_-_Kozan_Yerli_Portakal_04.jpg
+
 **face1-10**  
 https://www.thispersondoesnotexist.com/  
   
