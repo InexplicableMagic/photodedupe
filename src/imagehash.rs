@@ -8,6 +8,11 @@ use std::fs;
 
 use crate::image_error::MyImageError;
 
+#[derive(Clone)]
+pub struct ImagePath {
+	pub fpath: String,
+	pub is_compare_dir : bool,
+}
 
 pub struct ImageHashAV {
 	pub dupe_group : u64 ,		//A common key to group potential duplicates - same integer means possible (but not yet confirmed) dupe
@@ -18,7 +23,7 @@ pub struct ImageHashAV {
 	pub file_size : u64,		//File size in bytes
 	pub num_pixels: u64,		//Total number of pixels in the original image
 	pub std_dev : f32,			//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
-	pub fpath: String,			//The path to the image
+	pub image_path: ImagePath,			//The path to the image
 }
 
 pub struct ConfigOptions {
@@ -31,6 +36,8 @@ pub struct ConfigOptions {
 	pub only_list_uniques : bool,
 	pub list_all : bool,
 	pub num_threads : u32,
+	pub compare_dir : String,
+	pub am_comparing : bool,
 }
 
 /**
@@ -131,10 +138,10 @@ impl ImageHashAV {
 	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;	//Default colour variation threshold under which de-duplication is not attempted
 	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 20000; //Number of files at which we flip to the less accurate but faster algorithm
 		
-	pub fn new(fpath : &str) -> Result<ImageHashAV,MyImageError> {
+	pub fn new(fpath : &ImagePath) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
 						width: 0, height: 0, num_pixels: 0, std_dev: 0f32, 
-						file_size: 0, fpath: "".to_string() };
+						file_size: 0, image_path : ImagePath { fpath: "".to_string(), is_compare_dir: false } };
 		match object.calc_image_hash( &fpath ) {
 			Some(e) => return Err(e),
 			None => return Ok(object),
@@ -222,27 +229,27 @@ impl ImageHashAV {
 		
 	}
 	
-	pub fn calc_image_hash(&mut self, fpath: &str ) -> Option<MyImageError> {
+	pub fn calc_image_hash(&mut self, im_path: &ImagePath ) -> Option<MyImageError> {
 		   
-		match load_image_from_file( fpath ) {
+		match load_image_from_file( &im_path.fpath ) {
 			Ok(img) => {
 				let (width, height) = img.dimensions();
 				if width < 16 || height < 16 {
-					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", fpath).to_string()) );
+					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", im_path.fpath).to_string()) );
 				}
 		
 				self.width = width;
 				self.height = height;
 				self.num_pixels = (width as u64)*(height as u64);
-				self.fpath = fpath.to_string();
-		
+				self.image_path = im_path.clone();		
+
 				//Get the file size as a tie breaker if image dimensions are the same
-				match fs::metadata(fpath) {
+				match fs::metadata(im_path.fpath.clone()) {
 					Ok(md)=> {
 						self.file_size = md.len();
 					}
 					Err(_)=> {
-						return Some(MyImageError::FileError(format!("Error: Failed to get size of: {}", fpath).to_string()));
+						return Some(MyImageError::FileError(format!("Error: Failed to get size of: {}", im_path.fpath).to_string()));
 					}
 				}
 		
@@ -252,7 +259,7 @@ impl ImageHashAV {
 		
 				let (width, height) = scaled.dimensions();
 				if width != 8 || height != 8 {
-					return Some( MyImageError::DecodeFail(format!("Error: Failed to resize image correctly: {}", fpath).to_string()) );
+					return Some( MyImageError::DecodeFail(format!("Error: Failed to resize image correctly: {}", im_path.fpath).to_string()) );
 				}
 
 				let gs = scaled.grayscale( );
@@ -320,7 +327,7 @@ mod tests {
 	//Test an image is read and metadata extracted correctly
 	#[test]
 	fn test_image_read() {
-		let result = ImageHashAV::new( "unit_test_images/bridge1_best.jpg" ).unwrap();
+		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false } ).unwrap();
 		assert_eq!(768,result.width,"Width OK");
 		assert_eq!(576,result.height,"Height OK");
 		assert_eq!(576*768,result.num_pixels,"NUm pixels OK");
@@ -347,9 +354,9 @@ mod tests {
 	
 		//Check the best image matches the two duplicates
 		for i in 0..(image_paths.len()/3) {
-			let result = ImageHashAV::new( &image_paths[i*3] ).unwrap();
-			let dupe1 = ImageHashAV::new( &image_paths[(i*3)+1] ).unwrap();
-			let dupe2 = ImageHashAV::new( &image_paths[(i*3)+2] ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false } ).unwrap();
+			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false } ).unwrap();
+			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false } ).unwrap();
 		
 			//Check the duplicates match the best versions within a hamming distance of 1 bit (max 64 bits can be similar)
 			assert!( calc_hamming_distance(result.dupe_group, dupe1.dupe_group) >= 63, "First duplicate grey hash matches" );
@@ -375,7 +382,7 @@ mod tests {
 		}
 	
 		for path in &image_paths {
-			let result = ImageHashAV::new( &path ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false } ).unwrap();
 			image_hashes.push( result );
 		}
 		
