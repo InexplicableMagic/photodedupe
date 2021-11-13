@@ -67,7 +67,7 @@ If photos in the new images directory already exist in the collection at the sam
 
 If the behaviour is not desired, use the ```--always-mark-duplicates``` flag. This additional flag causes all duplicates in the new images directory to be returned regardless of if better resolution than any image in the existing collection:
 
-```photodedupe --duplicates --always-mark-duplicates --compare image.jpg collection_of_existing_images/ collection_of_existing_images_2/
+```photodedupe --duplicates --always-mark-duplicates --compare image.jpg collection_of_existing_images/ collection_of_existing_images_2/```
 
 When using ```--compare```, any duplicates present in the existing collection are not reported. Only duplicates present in the passed new images directory are reported. To also report images found in the collection is just the default behaviour, in which case simply do not use the ```--compare``` option at all and pass the new images directory as a regular argument.
 
