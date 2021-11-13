@@ -37,23 +37,25 @@ pub struct ConfigOptions {
 	pub only_list_uniques : bool,
 	pub list_all : bool,
 	pub num_threads : u32,
-	pub compare_dir : String,
-	pub am_comparing : bool,
-	pub always_mark_duplicates : bool,
+	pub compare_dir : String,			//The path to the comparison directory
+	pub am_comparing : bool,			//If the --compare option is used
+	pub always_mark_duplicates : bool,		//If the --always-mark-duplicates option is used
 }
 
 /**
  * Order the images with the following keys
  *  1st) The dupe_group (ascending)
- *  2nd) The total number of pixels (descending)
- *  3rd) The file size (descending)
- *  4th) Prefer the image not in the new images compare directory if all else is equal
+ *  2nd) If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
+ *  3rd) The total number of pixels (descending) - prefers higher resolution images as better quality
+ *  4th) The file size (descending) - prefers larger images as better quality where they are the same resolution
+ *  5th) Where --compare is used, prefers the image in the original collection and the new image will be the duplicate
  * 
  */
 impl Ord for ImageHashAV {
 	
     fn cmp(&self, other: &Self) -> Ordering {
 
+	//Sort images into groups of duplicates first
 	if self.dupe_group < other.dupe_group{
 		return Ordering::Less;
 	}
@@ -61,6 +63,8 @@ impl Ord for ImageHashAV {
 		return Ordering::Greater;
 	}
 
+	//If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
+	//This makes it a duplicate prior to checking if it's better resolution
 	if self.image_path.always_mark_dupe_compare && self.image_path.is_compare_dir && (!other.image_path.always_mark_dupe_compare) {
 		return Ordering::Greater;
 	}
@@ -87,6 +91,7 @@ impl Ord for ImageHashAV {
 		return Ordering::Greater;
 	}
 
+	//Where --compare is used, prefers the image in the original collection and the new image will be the duplicate
 	if self.image_path.is_compare_dir && (!other.image_path.is_compare_dir) {
 		return Ordering::Greater;
 	}

@@ -667,6 +667,50 @@ mod tests {
 		assert_eq!( images[0].dupe_group, images[1].dupe_group, "Images have same dupe group" );
 		assert_eq!( images[0].dupe_group, images[2].dupe_group, "Images have same dupe group" );
 	}
+
+	#[test]
+	fn test_compare_option() {
+		//Test the --compare option
+
+		//Put the highest resolution image in the compare directory and used the --always-mark-duplicates option
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:true, always_mark_dupe_compare: true } ).unwrap();
+		//Lower resolution image
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let mut images = vec![ best, dupe ];
+
+		colour_n_square_check( &mut images, &get_default_config_options() );
+		images.sort();
+
+		//Test the images are actually identified as duplicates
+		assert_eq!( images.len(), 2, "Should be two images" );
+		assert_ne!( images[0].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( images[1].dupe_group, 0, "Dupe group is not zero" );
+		assert_eq!( images[0].dupe_group, images[1].dupe_group, "Images have same dupe group" );
+
+		//Test that they are ordered such as the highest resolution image is lower down because it is in the comparison directory. This forces identification as a duplicate even though it is better quality
+		assert_eq!( images[0].image_path.fpath, "unit_test_images/car1_duplicate_1.jpg", "Duplicate should be top of the list because not in the compare directory." );
+		assert_eq!( images[1].image_path.fpath, "unit_test_images/car1_best.jpg", "Best image should be second on the list because is in the compare directory." );
+
+		
+		//Test that when images are identical the one in the compare directory should sort last when using -always-mark-duplicates option
+		let t2_best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:true, always_mark_dupe_compare: true } ).unwrap();
+		let t2_dupe1 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let t2_dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let mut t2_images = vec![ t2_best, t2_dupe1, t2_dupe2 ];
+
+		hamming_check( &mut t2_images, &get_default_config_options() );
+		t2_images.sort();
+
+		assert_eq!( t2_images.len(), 3, "Should be three images" );
+		assert_ne!( t2_images[0].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( t2_images[1].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( t2_images[2].dupe_group, 0, "Dupe group is not zero" );
+		assert_eq!( t2_images[0].dupe_group, t2_images[1].dupe_group, "Images have same dupe group" );
+		assert_eq!( t2_images[0].dupe_group, t2_images[2].dupe_group, "Images have same dupe group" );
+		assert_eq!( t2_images[0].image_path.is_compare_dir, false, "The 1st image is not in the compare directory" );
+		assert_eq!( t2_images[1].image_path.is_compare_dir, false, "The 2nd image is not in the compare directory" );
+		assert_eq!( t2_images[2].image_path.is_compare_dir, true, "The image in the compare directory is last in the sort group" );
+	}
 	
 }
 
