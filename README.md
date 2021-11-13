@@ -43,13 +43,34 @@ To list every image file found regardless of whether it has a duplicate use the 
 
 To list only the highest resolution version of each image use the ```--uniques``` option. This option could be used to copy the highest resolution versions to a different directory e.g:
 
-```photodedupe --uniques dir_of_photos/ | xargs -i cp "{}" best_copies_only_dir/```
+```photodedupe --uniques dir_of_photos/ | xargs -i cp "{}" unique_best_versions_dir/```
 
 To list only the lower resolution duplicate images, use the ```--duplicates``` option. This option could be used to remove duplicates from a directory e.g:
 
 ```photodedupe --duplicates dir_of_photos/ | xargs -i mv "{}" duplicate_photos_dir/```
 
 Note that photodedupe is performing a fuzzy match and is not 100% accurate. It is not advised to delete duplicates without manual inspection.
+
+It is possible to diff one directory of images against a set of other image directories. This feature is useful if you have a directory of new images and you wish to identify which images you already have in your photo collection.
+
+To identify which images in the directory of new images already exist in your collection pass the new images directory to the ``--compare`` option:
+
+```photodedupe --duplicates --compare new_images_dir/ collection_of_existing_images/ collection_of_existing_images_2/```
+
+The new images directory is inspected recursively and sub-directories will also be inspected for images. The same rules apply as for other directories. By default only files with common image file extensions will be inspected unless the ```--any-file``` option is used. It is also possible to specify a single specific file to be compared against the entire existing collection e.g:
+
+```photodedupe --duplicates --compare image.jpg collection_of_existing_images/ collection_of_existing_images_2/```
+
+If photos in the new images directory already exist in the collection at the same or lower resolution the files will be reported as duplicates. If however a photo appears in the new images directory at a higher resolution than present in the collection, it will not be reported as a duplicate. This is to enable better quality versions of existing images to be discovered. 
+
+When using this mode, any duplicates present in the existing collection are not reported. Only duplicates present in the new images collection are reported. To also report duplicates found in the images collection, simply remove the ```--compare``` option and pass the new_images_dir as with any other directory of images. 
+
+To identify which images in the directory of new images are not present in the existing collection (i.e. are unique):
+
+```photodedupe --uniques --compare dir_of_new_images/ collection_of_existing_images/ collection_of_existing_images_2/```
+
+If a better resolution version of an existing image is found amongst the new images, this is reported as unique. If the directory of new images itself contains duplicates, only the best resolution version available in the new images directory will be reported as unique. Unique images found in the existing collection are not reported, only unique images in the new images direcory that are not also in the existing image collection.
+
 
 ## Performance
 

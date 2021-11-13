@@ -10,20 +10,20 @@ use crate::image_error::MyImageError;
 
 #[derive(Clone)]
 pub struct ImagePath {
-	pub fpath: String,
-	pub is_compare_dir : bool,
+	pub fpath: String,		//The path to a valid image file
+	pub is_compare_dir : bool,	//True if the image exists in the new images comparison dir (false if feature not in use or else in existing collection)
 }
 
 pub struct ImageHashAV {
 	pub dupe_group : u64 ,		//A common key to group potential duplicates - same integer means possible (but not yet confirmed) dupe
 	pub grey_hash : u64,		//A hash code of a greyscale low resolution version of the image
 	pub low_res : [u8;192],		//The pixels of a colour low resolution version of the image
-	pub width: u32,				//Width of the original image in pixels
-	pub height: u32,			//Height of the original image in pixels
+	pub width: u32,			//Width of the original image in pixels
+	pub height: u32,		//Height of the original image in pixels
 	pub file_size : u64,		//File size in bytes
 	pub num_pixels: u64,		//Total number of pixels in the original image
-	pub std_dev : f32,			//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
-	pub image_path: ImagePath,			//The path to the image
+	pub std_dev : f32,		//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
+	pub image_path: ImagePath,	//The path to the image
 }
 
 pub struct ConfigOptions {
@@ -42,41 +42,50 @@ pub struct ConfigOptions {
 
 /**
  * Order the images with the following keys
- * 	1st) The dupe_group (ascending)
+ *  1st) The dupe_group (ascending)
  *  2nd) The total number of pixels (descending)
  *  3rd) The file size (descending)
+ *  4th) Prefer the image not in the new images compare directory if all else is equal
  * 
  */
 impl Ord for ImageHashAV {
 	
     fn cmp(&self, other: &Self) -> Ordering {
 
-        if self.dupe_group < other.dupe_group{
-			return Ordering::Less;
-		}
-		if self.dupe_group > other.dupe_group{
-			return Ordering::Greater;
-		}
-		
-		//Push files with greater number of pixels further up the list
-		if self.num_pixels > other.num_pixels{
-			return Ordering::Less;
-		}
-		
-		if self.num_pixels < other.num_pixels{
-			return Ordering::Greater;
-		}
-		
-		//Push larger file sizes further up the list
-		if self.file_size > other.file_size {
-			return Ordering::Less;
-		}
-		
-		if self.file_size < other.file_size {
-			return Ordering::Greater;
-		}
-		
-		return Ordering::Equal
+	if self.dupe_group < other.dupe_group{
+		return Ordering::Less;
+	}
+	if self.dupe_group > other.dupe_group{
+		return Ordering::Greater;
+	}
+	
+	//Push files with greater number of pixels further up the list
+	if self.num_pixels > other.num_pixels{
+		return Ordering::Less;
+	}
+	
+	if self.num_pixels < other.num_pixels{
+		return Ordering::Greater;
+	}
+	
+	//Push larger file sizes further up the list
+	if self.file_size > other.file_size {
+		return Ordering::Less;
+	}
+	
+	if self.file_size < other.file_size {
+		return Ordering::Greater;
+	}
+
+	if self.image_path.is_compare_dir && (!other.image_path.is_compare_dir) {
+		return Ordering::Greater;
+	}
+
+	if (!self.image_path.is_compare_dir) && other.image_path.is_compare_dir {
+		return Ordering::Less;
+	}
+	
+	return Ordering::Equal
     }
     
 }
@@ -180,8 +189,9 @@ impl ImageHashAV {
 		
 	}
 	
-	//Test if teo images are duplicates of each other
+	//Test if two images are duplicates of each other
 	pub fn is_dupe ( &self, other : &ImageHashAV, config: &ConfigOptions ) -> bool {
+
 		//Excludes dark images with little variation which are difficult to dedupe correctly
 		if self.std_dev > config.std_dev_threshold && other.std_dev > config.std_dev_threshold {	
 			//Checks the images have a similar aspect ratio	

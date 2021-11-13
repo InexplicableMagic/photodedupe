@@ -167,15 +167,15 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 		match value_t!(matches.value_of("compare_dir"), String) {
 			Ok(c_dir) => {
 				let dir_test = Path::new(&c_dir);
-				if dir_test.is_dir() {
+				if dir_test.is_dir() || dir_test.is_file() {
 					config.compare_dir = c_dir;
 					config.am_comparing  = true;
 				}else{
-					return Err(format!("Option to compare_dir \"{}\" is not a valid directory", c_dir));
+					return Err(format!("Option to --compare \"{}\" is not a valid directory or file.", c_dir));
 				}
 			},
 			Err(e) => {
-				return Err(format!("Error for the compare_dir option: {}",e.to_string()));
+				return Err(format!("Error for the --compare option: {}",e.to_string()));
 			}
 		}
 
