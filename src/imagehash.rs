@@ -12,6 +12,7 @@ use crate::image_error::MyImageError;
 pub struct ImagePath {
 	pub fpath: String,		//The path to a valid image file
 	pub is_compare_dir : bool,	//True if the image exists in the new images comparison dir (false if feature not in use or else in existing collection)
+	pub always_mark_dupe_compare : bool, //True if when using --compare a duplicate should always be marked even if a better quality than the existing image
 }
 
 pub struct ImageHashAV {
@@ -38,6 +39,7 @@ pub struct ConfigOptions {
 	pub num_threads : u32,
 	pub compare_dir : String,
 	pub am_comparing : bool,
+	pub always_mark_duplicates : bool,
 }
 
 /**
@@ -57,6 +59,14 @@ impl Ord for ImageHashAV {
 	}
 	if self.dupe_group > other.dupe_group{
 		return Ordering::Greater;
+	}
+
+	if self.image_path.always_mark_dupe_compare && self.image_path.is_compare_dir && (!other.image_path.always_mark_dupe_compare) {
+		return Ordering::Greater;
+	}
+
+	if (!self.image_path.always_mark_dupe_compare) && other.image_path.always_mark_dupe_compare && other.image_path.is_compare_dir {
+		return Ordering::Less;
 	}
 	
 	//Push files with greater number of pixels further up the list
@@ -150,7 +160,7 @@ impl ImageHashAV {
 	pub fn new(fpath : &ImagePath) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
 						width: 0, height: 0, num_pixels: 0, std_dev: 0f32, 
-						file_size: 0, image_path : ImagePath { fpath: "".to_string(), is_compare_dir: false } };
+						file_size: 0, image_path : ImagePath { fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
 		match object.calc_image_hash( &fpath ) {
 			Some(e) => return Err(e),
 			None => return Ok(object),
@@ -337,7 +347,7 @@ mod tests {
 	//Test an image is read and metadata extracted correctly
 	#[test]
 	fn test_image_read() {
-		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false } ).unwrap();
+		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		assert_eq!(768,result.width,"Width OK");
 		assert_eq!(576,result.height,"Height OK");
 		assert_eq!(576*768,result.num_pixels,"NUm pixels OK");
@@ -364,9 +374,9 @@ mod tests {
 	
 		//Check the best image matches the two duplicates
 		for i in 0..(image_paths.len()/3) {
-			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false } ).unwrap();
-			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false } ).unwrap();
-			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false } ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		
 			//Check the duplicates match the best versions within a hamming distance of 1 bit (max 64 bits can be similar)
 			assert!( calc_hamming_distance(result.dupe_group, dupe1.dupe_group) >= 63, "First duplicate grey hash matches" );
@@ -392,7 +402,7 @@ mod tests {
 		}
 	
 		for path in &image_paths {
-			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false } ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 			image_hashes.push( result );
 		}
 		

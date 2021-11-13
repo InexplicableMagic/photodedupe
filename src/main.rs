@@ -69,14 +69,14 @@ fn debug_mode( matches: &ArgMatches, config : &imagehash::ConfigOptions ) {
 				if paths.len() < 1 || paths.len() > 2 {
 					eprintln!("Error: Debug mode requires either exactly 1 or 2 paths to images.");
 				}else{
-					match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false }  )	{
+					match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false }  )	{
 						Ok(a) => {
 							eprintln!("Pixel std_dev First:  {} ", a.std_dev );
 							eprintln!("Grey Hash First:  {:x} ", a.grey_hash);
 							
 								
 							if paths.len() > 0 {		
-								match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false } ) {
+								match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false } ) {
 									Ok(b) => {
 										eprintln!("Grey Hash Second: {:x} ", b.grey_hash);
 										eprintln!("Are grey hashes identical?: {}", (b.grey_hash == a.grey_hash) );
@@ -117,6 +117,7 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 												num_threads : 4,
 												compare_dir : "".to_string(),
 												am_comparing : false,
+												always_mark_duplicates : false,
 									};
 }
 
@@ -129,6 +130,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 	config.only_list_uniques = matches.is_present("uniques");
 	config.list_all = matches.is_present("all");
 	config.alg_colour_diff_only = matches.is_present("force_colour_diff_only");
+	config.always_mark_duplicates = matches.is_present("always_mark_duplicates");
 	
 	if matches.is_present("any-file") {
 		config.only_known_file_extensions = false;
@@ -208,7 +210,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("u")
 				.required(false)
 				.takes_value(false)
-				.help("List only the best (highest resolution) version of each valid image without any duplicates."),
+				.help("List only the best (highest resolution) version of each valid image without listing any duplicates."),
 		).arg(
 			Arg::with_name("all")
 				.long("all")
@@ -217,14 +219,21 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("a")
 				.required(false)
 				.takes_value(false)
-				.help("List every unique image and the duplicates of each image grouped together."),
+				.help("List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates."),
 		).arg(
 			Arg::with_name("compare_dir")
 				.long("compare")
 				.short("c")
 				.required(false)
 				.takes_value(true)
-				.help("Compare this directory of images with all the others"),
+				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --always-mark-duplicates"),
+		).arg(
+			Arg::with_name("always_mark_duplicates")
+				.long("always-mark-duplicates")
+				.required(false)
+				.requires("compare_dir")
+				.takes_value(false)
+				.help("When using --compare with --duplicates or --uniques, always mark duplicate images even the new image is better quality"),
 		).arg(
 			Arg::with_name("any-file")
 				.long("any-file")
@@ -244,7 +253,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("t")
 				.required(false)
 				.takes_value(true)
-				.help("Number of threads to use (default is 4)")
+				.help("Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.")
 		).arg(
 			Arg::with_name("colour_diff_threshold")
 				.long("colour-diff-threshold")
@@ -386,7 +395,11 @@ fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions
 	}
 	
 	for path in dedup_file_list {
-		output_image_paths.push( imagehash::ImagePath { fpath: path, is_compare_dir: am_comparing } );
+		let mut always_mark : bool = false;
+		if am_comparing {
+			always_mark = config.always_mark_duplicates;
+		}
+		output_image_paths.push( imagehash::ImagePath { fpath: path, is_compare_dir: am_comparing, always_mark_dupe_compare: always_mark } );
 	}
 
 	return output_image_paths;
@@ -566,7 +579,7 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 //Print the detected duplicates based on the command line options
 fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &imagehash::ConfigOptions  ){
 
-	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, image_path: imagehash::ImagePath{ fpath: "".to_string(), is_compare_dir: false } };
+	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, image_path: imagehash::ImagePath{ fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
 	let mut printed_uniq_header : bool = false;
 	let mut not_first_it = false;
 		
@@ -622,9 +635,9 @@ mod tests {
     //Tests that the n square check identifies three images that should be duplicates as duplicates
 	#[test]
 	fn test_n_square_check() {
-		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_best.jpg".to_string(), is_compare_dir:false } ).unwrap();
-		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_1.jpg".to_string(), is_compare_dir:false } ).unwrap();
-		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_2.jpg".to_string(), is_compare_dir:false } ).unwrap();
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_2.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		let mut images = vec![ dupe, best, dupe2 ];
 		
 		colour_n_square_check( &mut images, &get_default_config_options() );
@@ -640,9 +653,9 @@ mod tests {
 	//Tests that when using the hamming method images are identified as duplicates
 	#[test]
 	fn test_hamming() {
-		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:false } ).unwrap();
-		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_1.jpg".to_string(), is_compare_dir:false } ).unwrap();
-		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_2.jpg".to_string(), is_compare_dir:false } ).unwrap();
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_2.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		let mut images = vec![ dupe2, best, dupe ];
 		
 		hamming_check( &mut images, &get_default_config_options() );
