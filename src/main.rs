@@ -594,22 +594,25 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 			if config.list_all {
 				println!("\tDuplicate: {}", imagehasher.image_path.fpath );
 			}else if config.only_list_duplicates {
-				//If comparing with another set, only report the duplicate if it is in the comparison dir
+				//If using --compare, only report the duplicate if it is in the comparison dir
 				if (!config.am_comparing) || imagehasher.image_path.is_compare_dir {
 					println!("{}", imagehasher.image_path.fpath );
 				}
 			}else if !config.only_list_uniques {
-				if !printed_uniq_header {
-					println!("Best({}x{}): {}", last_unique_ih.width, last_unique_ih.height, last_unique_ih.image_path.fpath );
-					printed_uniq_header = true;
+				//If using --compare, only report if the best or duplicate is in the comparison dir
+				if (!config.am_comparing) || last_unique_ih.image_path.is_compare_dir || imagehasher.image_path.is_compare_dir {
+					if !printed_uniq_header {
+						println!("Best({}x{}): {}", last_unique_ih.width, last_unique_ih.height, last_unique_ih.image_path.fpath );
+						printed_uniq_header = true;
+					}
+					println!("\tDuplicate({}x{}): {}", imagehasher.width, imagehasher.height, imagehasher.image_path.fpath );
 				}
-				println!("\tDuplicate({}x{}): {}", imagehasher.width, imagehasher.height, imagehasher.image_path.fpath );
 			}
 			num_dupe_images+=1;
 		}else{
 			printed_uniq_header = false;
 			if config.only_list_uniques || config.list_all {
-				//If comparing with another set, only report the unique image if it is in the comparison dir
+				//If using --compare, only report the unique image if it is in the comparison dir
 				if (!config.am_comparing) || imagehasher.image_path.is_compare_dir {
 					println!("{}", imagehasher.image_path.fpath );
 				}
@@ -621,7 +624,7 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 		not_first_it = true;
 	}
 	
-	if (!config.only_list_duplicates) && (!config.only_list_uniques) && (!config.list_all) {
+	if (!config.only_list_duplicates) && (!config.only_list_uniques) && (!config.list_all) && (!config.am_comparing) {
 		eprintln!("Unique Images: {} Duplicates: {}", num_unique_images, num_dupe_images);
 	}
 
