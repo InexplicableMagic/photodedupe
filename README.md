@@ -95,8 +95,7 @@ If images should not be reported as unique even if higher resolution than in the
 
 In the above example table this set of flags would cause nothing to be reported as all images in the new_images directory are duplicates of the existing collection and the resolution has been ignored.
 
-To show the pairing between images in the new images directory and images within the existing collection use the ```--compare``` option alone (without either the ```--duplicates``` or ```--uniques``` flag). This will show only instances where there is a duplicate in the new images directory. 
-
+To show the pairing between images in the new images directory and images within the existing collection use the ```--compare``` option alone (without either the ```--duplicates``` or ```--uniques``` flag). This will show only instances where there is a duplicate of an image in the new images directory. Only the highest resolution version will be shown from the collection (unless the version in the new images directory is the best version).
 
 ## Performance
 
