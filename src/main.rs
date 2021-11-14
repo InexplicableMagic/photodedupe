@@ -226,14 +226,14 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("c")
 				.required(false)
 				.takes_value(true)
-				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --always-mark-duplicates"),
+				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution"),
 		).arg(
 			Arg::with_name("always_mark_duplicates")
-				.long("always-mark-duplicates")
+				.long("ignore-resolution")
 				.required(false)
 				.requires("compare_dir")
 				.takes_value(false)
-				.help("When using --compare with --duplicates or --uniques, always mark duplicate images even the new image is better quality"),
+				.help("When using --compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality."),
 		).arg(
 			Arg::with_name("any-file")
 				.long("any-file")
