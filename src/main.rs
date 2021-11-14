@@ -216,6 +216,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.long("all")
 				.conflicts_with("duplicates")
 				.conflicts_with("uniques")
+				.conflicts_with("compare_dir")
 				.short("a")
 				.required(false)
 				.takes_value(false)
@@ -226,6 +227,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("c")
 				.required(false)
 				.takes_value(true)
+				.conflicts_with("all")
 				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution"),
 		).arg(
 			Arg::with_name("always_mark_duplicates")
@@ -266,6 +268,10 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("g")
 				.required(false)
 				.takes_value(false)
+				.conflicts_with("compare_dir")
+				.conflicts_with("all")
+				.conflicts_with("duplicates")
+				.conflicts_with("uniques")
 				.help("Debug mode. Compare two files and explain why the files are either duplicates or unique."),
         ).arg(Arg::with_name("dir_or_file")
          .multiple(true))
