@@ -81,17 +81,17 @@ Image\_dupe\_1 is not shown as a duplicate because at 5 megapixels it exceeds th
 
 If you would like to show all duplicates in the new images directory regardless of resolution (which would include Image1 as a duplicate in the above example), use the ```--ignore-resolution``` flag:
 
-```photodedupe --duplicates --ignore-resolution --compare image.jpg collection_of_existing_images/```
+```photodedupe --duplicates --ignore-resolution --compare new_images_dir/ collection_of_existing_images/```
 
 To identify which images in the directory of new images are not present in the existing collection (i.e. are unique with respect the existing collection):
 
-```photodedupe --uniques --compare dir_of_new_images/ collection_of_existing_images/```
+```photodedupe --uniques --compare new_images_dir/ collection_of_existing_images/```
 
 If a higher resolution version of an existing image is found amongst the new images, this is reported as unique. If the directory of new images itself contains duplicates, only the highest resolution version available in the new images directory will be reported as unique. Unique images found in the existing collection are not reported, only unique images in the new images direcory that are not also in the existing image collection. In the above example table image_dupe_1 would be reported as unique because the resolution exceeds the best copy in the existing collection.
 
 If images should not be reported as unique even if higher resolution than in the existing collection, use the ```--ignore-resolution``` option:
 
-```photodedupe --uniques --ignore-resolution --compare dir_of_new_images/ collection_of_existing_images/```
+```photodedupe --uniques --ignore-resolution --compare new_images_dir/ collection_of_existing_images/```
 
 In the above example table this set of flags would cause nothing to be reported as all images in the new_images directory are duplicates of the existing collection and the resolution has been ignored.
 
