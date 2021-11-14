@@ -191,7 +191,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 fn get_command_line_arguments() ->  ArgMatches<'static> {
 		let matches =  App::new("Photo Deduplicator")
 		.author("InexplicableMagic https://github.com/InexplicableMagic")
-		.version("0.3.0")
+		.version("0.3.1")
 		.about("Locates duplicates of photos")
 		.arg(
 			Arg::with_name("duplicates")
