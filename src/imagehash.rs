@@ -8,17 +8,23 @@ use std::fs;
 
 use crate::image_error::MyImageError;
 
+#[derive(Clone)]
+pub struct ImagePath {
+	pub fpath: String,		//The path to a valid image file
+	pub is_compare_dir : bool,	//True if the image exists in the new images comparison dir (false if feature not in use or else in existing collection)
+	pub always_mark_dupe_compare : bool, //True if when using --compare a duplicate should always be marked even if a better quality than the existing image
+}
 
 pub struct ImageHashAV {
 	pub dupe_group : u64 ,		//A common key to group potential duplicates - same integer means possible (but not yet confirmed) dupe
 	pub grey_hash : u64,		//A hash code of a greyscale low resolution version of the image
 	pub low_res : [u8;192],		//The pixels of a colour low resolution version of the image
-	pub width: u32,				//Width of the original image in pixels
-	pub height: u32,			//Height of the original image in pixels
+	pub width: u32,			//Width of the original image in pixels
+	pub height: u32,		//Height of the original image in pixels
 	pub file_size : u64,		//File size in bytes
 	pub num_pixels: u64,		//Total number of pixels in the original image
-	pub std_dev : f32,			//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
-	pub fpath: String,			//The path to the image
+	pub std_dev : f32,		//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
+	pub image_path: ImagePath,	//The path to the image
 }
 
 pub struct ConfigOptions {
@@ -31,45 +37,70 @@ pub struct ConfigOptions {
 	pub only_list_uniques : bool,
 	pub list_all : bool,
 	pub num_threads : u32,
+	pub compare_dir : String,			//The path to the comparison directory
+	pub am_comparing : bool,			//If the --compare option is used
+	pub always_mark_duplicates : bool,		//If the --always-mark-duplicates option is used
 }
 
 /**
  * Order the images with the following keys
- * 	1st) The dupe_group (ascending)
- *  2nd) The total number of pixels (descending)
- *  3rd) The file size (descending)
+ *  1st) The dupe_group (ascending)
+ *  2nd) If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
+ *  3rd) The total number of pixels (descending) - prefers higher resolution images as better quality
+ *  4th) The file size (descending) - prefers larger images as better quality where they are the same resolution
+ *  5th) Where --compare is used, prefers the image in the original collection and the new image will be the duplicate
  * 
  */
 impl Ord for ImageHashAV {
 	
     fn cmp(&self, other: &Self) -> Ordering {
 
-        if self.dupe_group < other.dupe_group{
-			return Ordering::Less;
-		}
-		if self.dupe_group > other.dupe_group{
-			return Ordering::Greater;
-		}
-		
-		//Push files with greater number of pixels further up the list
-		if self.num_pixels > other.num_pixels{
-			return Ordering::Less;
-		}
-		
-		if self.num_pixels < other.num_pixels{
-			return Ordering::Greater;
-		}
-		
-		//Push larger file sizes further up the list
-		if self.file_size > other.file_size {
-			return Ordering::Less;
-		}
-		
-		if self.file_size < other.file_size {
-			return Ordering::Greater;
-		}
-		
-		return Ordering::Equal
+	//Sort images into groups of duplicates first
+	if self.dupe_group < other.dupe_group{
+		return Ordering::Less;
+	}
+	if self.dupe_group > other.dupe_group{
+		return Ordering::Greater;
+	}
+
+	//If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
+	//This makes it a duplicate prior to checking if it's better resolution
+	if self.image_path.always_mark_dupe_compare && self.image_path.is_compare_dir && (!other.image_path.always_mark_dupe_compare) {
+		return Ordering::Greater;
+	}
+
+	if (!self.image_path.always_mark_dupe_compare) && other.image_path.always_mark_dupe_compare && other.image_path.is_compare_dir {
+		return Ordering::Less;
+	}
+	
+	//Push files with greater number of pixels further up the list
+	if self.num_pixels > other.num_pixels{
+		return Ordering::Less;
+	}
+	
+	if self.num_pixels < other.num_pixels{
+		return Ordering::Greater;
+	}
+	
+	//Push larger file sizes further up the list
+	if self.file_size > other.file_size {
+		return Ordering::Less;
+	}
+	
+	if self.file_size < other.file_size {
+		return Ordering::Greater;
+	}
+
+	//Where --compare is used, prefers the image in the original collection and the new image will be the duplicate
+	if self.image_path.is_compare_dir && (!other.image_path.is_compare_dir) {
+		return Ordering::Greater;
+	}
+
+	if (!self.image_path.is_compare_dir) && other.image_path.is_compare_dir {
+		return Ordering::Less;
+	}
+	
+	return Ordering::Equal
     }
     
 }
@@ -131,10 +162,10 @@ impl ImageHashAV {
 	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;	//Default colour variation threshold under which de-duplication is not attempted
 	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 20000; //Number of files at which we flip to the less accurate but faster algorithm
 		
-	pub fn new(fpath : &str) -> Result<ImageHashAV,MyImageError> {
+	pub fn new(fpath : &ImagePath) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
 						width: 0, height: 0, num_pixels: 0, std_dev: 0f32, 
-						file_size: 0, fpath: "".to_string() };
+						file_size: 0, image_path : ImagePath { fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
 		match object.calc_image_hash( &fpath ) {
 			Some(e) => return Err(e),
 			None => return Ok(object),
@@ -173,8 +204,9 @@ impl ImageHashAV {
 		
 	}
 	
-	//Test if teo images are duplicates of each other
+	//Test if two images are duplicates of each other
 	pub fn is_dupe ( &self, other : &ImageHashAV, config: &ConfigOptions ) -> bool {
+
 		//Excludes dark images with little variation which are difficult to dedupe correctly
 		if self.std_dev > config.std_dev_threshold && other.std_dev > config.std_dev_threshold {	
 			//Checks the images have a similar aspect ratio	
@@ -222,27 +254,27 @@ impl ImageHashAV {
 		
 	}
 	
-	pub fn calc_image_hash(&mut self, fpath: &str ) -> Option<MyImageError> {
+	pub fn calc_image_hash(&mut self, im_path: &ImagePath ) -> Option<MyImageError> {
 		   
-		match load_image_from_file( fpath ) {
+		match load_image_from_file( &im_path.fpath ) {
 			Ok(img) => {
 				let (width, height) = img.dimensions();
 				if width < 16 || height < 16 {
-					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", fpath).to_string()) );
+					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", im_path.fpath).to_string()) );
 				}
 		
 				self.width = width;
 				self.height = height;
 				self.num_pixels = (width as u64)*(height as u64);
-				self.fpath = fpath.to_string();
-		
+				self.image_path = im_path.clone();		
+
 				//Get the file size as a tie breaker if image dimensions are the same
-				match fs::metadata(fpath) {
+				match fs::metadata(im_path.fpath.clone()) {
 					Ok(md)=> {
 						self.file_size = md.len();
 					}
 					Err(_)=> {
-						return Some(MyImageError::FileError(format!("Error: Failed to get size of: {}", fpath).to_string()));
+						return Some(MyImageError::FileError(format!("Error: Failed to get size of: {}", im_path.fpath).to_string()));
 					}
 				}
 		
@@ -252,7 +284,7 @@ impl ImageHashAV {
 		
 				let (width, height) = scaled.dimensions();
 				if width != 8 || height != 8 {
-					return Some( MyImageError::DecodeFail(format!("Error: Failed to resize image correctly: {}", fpath).to_string()) );
+					return Some( MyImageError::DecodeFail(format!("Error: Failed to resize image correctly: {}", im_path.fpath).to_string()) );
 				}
 
 				let gs = scaled.grayscale( );
@@ -320,7 +352,7 @@ mod tests {
 	//Test an image is read and metadata extracted correctly
 	#[test]
 	fn test_image_read() {
-		let result = ImageHashAV::new( "unit_test_images/bridge1_best.jpg" ).unwrap();
+		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		assert_eq!(768,result.width,"Width OK");
 		assert_eq!(576,result.height,"Height OK");
 		assert_eq!(576*768,result.num_pixels,"NUm pixels OK");
@@ -347,9 +379,9 @@ mod tests {
 	
 		//Check the best image matches the two duplicates
 		for i in 0..(image_paths.len()/3) {
-			let result = ImageHashAV::new( &image_paths[i*3] ).unwrap();
-			let dupe1 = ImageHashAV::new( &image_paths[(i*3)+1] ).unwrap();
-			let dupe2 = ImageHashAV::new( &image_paths[(i*3)+2] ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		
 			//Check the duplicates match the best versions within a hamming distance of 1 bit (max 64 bits can be similar)
 			assert!( calc_hamming_distance(result.dupe_group, dupe1.dupe_group) >= 63, "First duplicate grey hash matches" );
@@ -375,7 +407,7 @@ mod tests {
 		}
 	
 		for path in &image_paths {
-			let result = ImageHashAV::new( &path ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 			image_hashes.push( result );
 		}
 		

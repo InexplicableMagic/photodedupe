@@ -16,6 +16,8 @@ use indicatif::ProgressBar;
 mod imagehash;
 mod image_error;
 
+
+
 fn main() {
 	
 	//Process command line arguments
@@ -27,8 +29,16 @@ fn main() {
 			if !matches.is_present("debug") {
 				//Gather the list of files to inspect
 				match collate_file_list_any_source( &matches, &config ) {
-					Some(dedup_file_list) => {
+					Some(mut dedup_file_list) => {
 						
+						//Add int the images from the comparison directory
+						if config.am_comparing {
+							let mut path_list  : Vec<String> = Vec::new();
+							path_list.push(config.compare_dir.clone());
+							let compare_flist = gather_file_list( &path_list, &config, true );
+							dedup_file_list.extend( compare_flist );
+						}
+
 						//Calculate an image hash for each image and image statistics
 						let results = run_image_hashing( dedup_file_list, &config );
 						
@@ -36,6 +46,7 @@ fn main() {
 							//Write out the list of duplicates per command line options
 							output_results( results, &config );
 						}
+						
 					},
 					None => {
 						eprintln!("Didn't find any image files to test");
@@ -58,14 +69,14 @@ fn debug_mode( matches: &ArgMatches, config : &imagehash::ConfigOptions ) {
 				if paths.len() < 1 || paths.len() > 2 {
 					eprintln!("Error: Debug mode requires either exactly 1 or 2 paths to images.");
 				}else{
-					match imagehash::ImageHashAV::new( paths.next().unwrap() )	{
+					match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false }  )	{
 						Ok(a) => {
 							eprintln!("Pixel std_dev First:  {} ", a.std_dev );
 							eprintln!("Grey Hash First:  {:x} ", a.grey_hash);
 							
 								
 							if paths.len() > 0 {		
-								match imagehash::ImageHashAV::new( paths.next().unwrap() ) {
+								match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false } ) {
 									Ok(b) => {
 										eprintln!("Grey Hash Second: {:x} ", b.grey_hash);
 										eprintln!("Are grey hashes identical?: {}", (b.grey_hash == a.grey_hash) );
@@ -104,6 +115,9 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 												only_list_uniques : false,
 												list_all : false,
 												num_threads : 4,
+												compare_dir : "".to_string(),
+												am_comparing : false,
+												always_mark_duplicates : false,
 									};
 }
 
@@ -116,11 +130,12 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 	config.only_list_uniques = matches.is_present("uniques");
 	config.list_all = matches.is_present("all");
 	config.alg_colour_diff_only = matches.is_present("force_colour_diff_only");
+	config.always_mark_duplicates = matches.is_present("always_mark_duplicates");
 	
 	if matches.is_present("any-file") {
 		config.only_known_file_extensions = false;
 	}
-	
+
 	if matches.is_present("num_threads") {
 		match value_t!(matches.value_of("num_threads"), u32) {
 			Ok(num_threads) => {
@@ -149,6 +164,25 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 			}
 		}
 	}
+
+	if matches.is_present("compare_dir") {
+		match value_t!(matches.value_of("compare_dir"), String) {
+			Ok(c_dir) => {
+				let dir_test = Path::new(&c_dir);
+				if dir_test.is_dir() || dir_test.is_file() {
+					config.compare_dir = c_dir;
+					config.am_comparing  = true;
+				}else{
+					return Err(format!("Option to --compare \"{}\" is not a valid directory or file.", c_dir));
+				}
+			},
+			Err(e) => {
+				return Err(format!("Error for the --compare option: {}",e.to_string()));
+			}
+		}
+
+	}
+
 	
 	return Ok(config);
 	
@@ -157,7 +191,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 fn get_command_line_arguments() ->  ArgMatches<'static> {
 		let matches =  App::new("Photo Deduplicator")
 		.author("InexplicableMagic https://github.com/InexplicableMagic")
-		.version("0.2.0")
+		.version("0.3.0")
 		.about("Locates duplicates of photos")
 		.arg(
 			Arg::with_name("duplicates")
@@ -176,7 +210,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("u")
 				.required(false)
 				.takes_value(false)
-				.help("List only the best (highest resolution) version of each valid image without any duplicates."),
+				.help("List only the best (highest resolution) version of each valid image without listing any duplicates."),
 		).arg(
 			Arg::with_name("all")
 				.long("all")
@@ -185,7 +219,21 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("a")
 				.required(false)
 				.takes_value(false)
-				.help("List every unique image and the duplicates of each image grouped together."),
+				.help("List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates."),
+		).arg(
+			Arg::with_name("compare_dir")
+				.long("compare")
+				.short("c")
+				.required(false)
+				.takes_value(true)
+				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution"),
+		).arg(
+			Arg::with_name("always_mark_duplicates")
+				.long("ignore-resolution")
+				.required(false)
+				.requires("compare_dir")
+				.takes_value(false)
+				.help("When using --compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality."),
 		).arg(
 			Arg::with_name("any-file")
 				.long("any-file")
@@ -205,7 +253,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.short("t")
 				.required(false)
 				.takes_value(true)
-				.help("Number of threads to use (default is 4)")
+				.help("Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.")
 		).arg(
 			Arg::with_name("colour_diff_threshold")
 				.long("colour-diff-threshold")
@@ -227,15 +275,15 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 }
 
 
-fn collate_file_list_any_source( matches: &ArgMatches, config: &imagehash::ConfigOptions ) -> Option<HashSet<String>> {
+fn collate_file_list_any_source( matches: &ArgMatches, config: &imagehash::ConfigOptions ) -> Option<Vec<imagehash::ImagePath>> {
 	
 	match gather_file_list_from_cmd_line( &matches ) {
 		Some( st_files ) => {
-			return Some(gather_file_list( &st_files, &config ));
+			return Some(gather_file_list( &st_files, &config, false ));
 		},
 		None => {
 			let st_files = gather_file_list_from_stdin( )?;
-			return Some(gather_file_list( &st_files, &config ));
+			return Some(gather_file_list( &st_files, &config, false ));
 			
 		},
 	}
@@ -247,7 +295,7 @@ fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
 	let stdin = io::stdin();
-    for line in stdin.lock().lines() {
+    	for line in stdin.lock().lines() {
 			match line {
 				Ok(line) => { 
 					if !line.is_empty() {
@@ -314,9 +362,10 @@ fn valid_file_extension( fpath: &Path, config: &imagehash::ConfigOptions ) -> bo
 
 //Traverse any directories.
 //Test the file paths found are valid and unique.
-fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions ) -> HashSet<String> {
+fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions, am_comparing : bool ) -> Vec<imagehash::ImagePath> {
   	   	
    	let mut dedup_file_list = HashSet::new();
+	let mut output_image_paths  : Vec<imagehash::ImagePath> = Vec::new();
    	    
 	for file_or_dir in path_list {
 		let fod_test = Path::new(file_or_dir);
@@ -345,7 +394,15 @@ fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions
 		}
 	}
 	
-	return dedup_file_list;
+	for path in dedup_file_list {
+		let mut always_mark : bool = false;
+		if am_comparing {
+			always_mark = config.always_mark_duplicates;
+		}
+		output_image_paths.push( imagehash::ImagePath { fpath: path, is_compare_dir: am_comparing, always_mark_dupe_compare: always_mark } );
+	}
+
+	return output_image_paths;
 			
 }
 
@@ -358,7 +415,7 @@ fn dir_filter(entry: &DirEntry) -> bool {
 }
 
 //Accepts a list of file paths and returns an ordered list of metadata with possible (but not conformed) duplicates grouped together
-fn run_image_hashing( dedup_file_list: HashSet<String>, config : &imagehash::ConfigOptions ) -> Vec<imagehash::ImageHashAV> {
+fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imagehash::ConfigOptions ) -> Vec<imagehash::ImageHashAV> {
 	
 	let mut image_hash_results: Vec<imagehash::ImageHashAV> = Vec::new();
 	let mut error_list : Vec<image_error::MyImageError> = Vec::new();
@@ -522,7 +579,7 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 //Print the detected duplicates based on the command line options
 fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &imagehash::ConfigOptions  ){
 
-	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, fpath: "".to_string() };
+	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, image_path: imagehash::ImagePath{ fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
 	let mut printed_uniq_header : bool = false;
 	let mut not_first_it = false;
 		
@@ -535,21 +592,30 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 		if not_first_it && imagehasher.dupe_group == last_unique_ih.dupe_group && 
 			last_unique_ih.is_dupe( &imagehasher, &config )  {			
 			if config.list_all {
-				println!("\tDuplicate: {}", imagehasher.fpath );
+				println!("\tDuplicate: {}", imagehasher.image_path.fpath );
 			}else if config.only_list_duplicates {
-				println!("{}", imagehasher.fpath );
-			}else if !config.only_list_uniques {
-				if !printed_uniq_header {
-					println!("Best({}x{}): {}", last_unique_ih.width, last_unique_ih.height, last_unique_ih.fpath );
-					printed_uniq_header = true;
+				//If using --compare, only report the duplicate if it is in the comparison dir
+				if (!config.am_comparing) || imagehasher.image_path.is_compare_dir {
+					println!("{}", imagehasher.image_path.fpath );
 				}
-				println!("\tDuplicate({}x{}): {}", imagehasher.width, imagehasher.height, imagehasher.fpath );
+			}else if !config.only_list_uniques {
+				//If using --compare, only report if the best or duplicate is in the comparison dir
+				if (!config.am_comparing) || last_unique_ih.image_path.is_compare_dir || imagehasher.image_path.is_compare_dir {
+					if !printed_uniq_header {
+						println!("Best({}x{}): {}", last_unique_ih.width, last_unique_ih.height, last_unique_ih.image_path.fpath );
+						printed_uniq_header = true;
+					}
+					println!("\tDuplicate({}x{}): {}", imagehasher.width, imagehasher.height, imagehasher.image_path.fpath );
+				}
 			}
 			num_dupe_images+=1;
 		}else{
 			printed_uniq_header = false;
 			if config.only_list_uniques || config.list_all {
-				println!("{}", imagehasher.fpath );
+				//If using --compare, only report the unique image if it is in the comparison dir
+				if (!config.am_comparing) || imagehasher.image_path.is_compare_dir {
+					println!("{}", imagehasher.image_path.fpath );
+				}
 			}
 						
 			last_unique_ih = imagehasher;
@@ -558,11 +624,12 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 		not_first_it = true;
 	}
 	
-	if (!config.only_list_duplicates) && (!config.only_list_uniques) && (!config.list_all) {
+	if (!config.only_list_duplicates) && (!config.only_list_uniques) && (!config.list_all) && (!config.am_comparing) {
 		eprintln!("Unique Images: {} Duplicates: {}", num_unique_images, num_dupe_images);
 	}
 
 }
+
 
 #[cfg(test)]
 mod tests {	
@@ -571,9 +638,9 @@ mod tests {
     //Tests that the n square check identifies three images that should be duplicates as duplicates
 	#[test]
 	fn test_n_square_check() {
-		let best = imagehash::ImageHashAV::new( "unit_test_images/cat1_best.jpg" ).unwrap();
-		let dupe = imagehash::ImageHashAV::new( "unit_test_images/cat1_duplicate_1.jpg" ).unwrap();
-		let dupe2 = imagehash::ImageHashAV::new( "unit_test_images/cat1_duplicate_2.jpg" ).unwrap();
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_duplicate_2.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		let mut images = vec![ dupe, best, dupe2 ];
 		
 		colour_n_square_check( &mut images, &get_default_config_options() );
@@ -589,9 +656,9 @@ mod tests {
 	//Tests that when using the hamming method images are identified as duplicates
 	#[test]
 	fn test_hamming() {
-		let best = imagehash::ImageHashAV::new( "unit_test_images/car1_best.jpg" ).unwrap();
-		let dupe = imagehash::ImageHashAV::new( "unit_test_images/car1_duplicate_1.jpg" ).unwrap();
-		let dupe2 = imagehash::ImageHashAV::new( "unit_test_images/car1_duplicate_2.jpg" ).unwrap();
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_2.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
 		let mut images = vec![ dupe2, best, dupe ];
 		
 		hamming_check( &mut images, &get_default_config_options() );
@@ -602,6 +669,50 @@ mod tests {
 		assert_ne!( images[2].dupe_group, 0, "Dupe group is not zero" );
 		assert_eq!( images[0].dupe_group, images[1].dupe_group, "Images have same dupe group" );
 		assert_eq!( images[0].dupe_group, images[2].dupe_group, "Images have same dupe group" );
+	}
+
+	#[test]
+	fn test_compare_option() {
+		//Test the --compare option
+
+		//Put the highest resolution image in the compare directory and used the --always-mark-duplicates option
+		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:true, always_mark_dupe_compare: true } ).unwrap();
+		//Lower resolution image
+		let dupe = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_duplicate_1.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let mut images = vec![ best, dupe ];
+
+		colour_n_square_check( &mut images, &get_default_config_options() );
+		images.sort();
+
+		//Test the images are actually identified as duplicates
+		assert_eq!( images.len(), 2, "Should be two images" );
+		assert_ne!( images[0].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( images[1].dupe_group, 0, "Dupe group is not zero" );
+		assert_eq!( images[0].dupe_group, images[1].dupe_group, "Images have same dupe group" );
+
+		//Test that they are ordered such as the highest resolution image is lower down because it is in the comparison directory. This forces identification as a duplicate even though it is better quality
+		assert_eq!( images[0].image_path.fpath, "unit_test_images/car1_duplicate_1.jpg", "Duplicate should be top of the list because not in the compare directory." );
+		assert_eq!( images[1].image_path.fpath, "unit_test_images/car1_best.jpg", "Best image should be second on the list because is in the compare directory." );
+
+		
+		//Test that when images are identical the one in the compare directory should sort last when using -always-mark-duplicates option
+		let t2_best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:true, always_mark_dupe_compare: true } ).unwrap();
+		let t2_dupe1 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let t2_dupe2 = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/book1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let mut t2_images = vec![ t2_best, t2_dupe1, t2_dupe2 ];
+
+		hamming_check( &mut t2_images, &get_default_config_options() );
+		t2_images.sort();
+
+		assert_eq!( t2_images.len(), 3, "Should be three images" );
+		assert_ne!( t2_images[0].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( t2_images[1].dupe_group, 0, "Dupe group is not zero" );
+		assert_ne!( t2_images[2].dupe_group, 0, "Dupe group is not zero" );
+		assert_eq!( t2_images[0].dupe_group, t2_images[1].dupe_group, "Images have same dupe group" );
+		assert_eq!( t2_images[0].dupe_group, t2_images[2].dupe_group, "Images have same dupe group" );
+		assert_eq!( t2_images[0].image_path.is_compare_dir, false, "The 1st image is not in the compare directory" );
+		assert_eq!( t2_images[1].image_path.is_compare_dir, false, "The 2nd image is not in the compare directory" );
+		assert_eq!( t2_images[2].image_path.is_compare_dir, true, "The image in the compare directory is last in the sort group" );
 	}
 	
 }
