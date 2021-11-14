@@ -65,7 +65,7 @@ The new images directory passed to ```--compare``` is inspected recursively and 
 
 If photos in the new images directory already exist in the collection at the same or lower resolution the new images will be reported as duplicates. If however a photo appears in the new images directory at a higher resolution than present in the collection, it will not be reported as a duplicate. This is to enable better quality versions of existing images to be discovered.
 
-When using ```--compare```, any duplicates present in the existing collection are not reported. Only duplicates present in the new images directory are reported. Also reporting images found in the collection is just the default behaviour, in which case simply do not use the ```--compare``` option at all and pass the new images directory as a regular argument.
+When using ```--compare```, any duplicates present in the existing collection are not reported. Only duplicates present in the new images directory are reported. Reporting images found in the collection is just the default behaviour, in which case simply do not use the ```--compare``` option at all and pass the new images directory as a regular argument.
 
 In the example below the directory "new_images" is passed to the ```--compare``` option and the ```--duplicates``` flag is used. The existing_collection directory is passed as an argument. All of the images in the below table are visually duplicates of each other:
 
