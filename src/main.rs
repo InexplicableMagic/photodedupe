@@ -188,7 +188,7 @@ fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOption
 	
 }
 
-fn get_command_line_arguments() ->  ArgMatches<'static> {
+fn get_command_line_arguments() ->  ArgMatches {
 		let matches =  App::new("Photo Deduplicator")
 		.author("InexplicableMagic https://github.com/InexplicableMagic")
 		.version("0.3.1")
@@ -198,7 +198,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.long("duplicates")
 				.conflicts_with("uniques")
 				.conflicts_with("all")
-				.short("d")
+				.short('d')
 				.required(false)
 				.takes_value(false)
 				.help("List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images."),
@@ -207,7 +207,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.long("uniques")
 				.conflicts_with("duplicates")
 				.conflicts_with("all")
-				.short("u")
+				.short('u')
 				.required(false)
 				.takes_value(false)
 				.help("List only the best (highest resolution) version of each valid image without listing any duplicates."),
@@ -217,14 +217,14 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 				.conflicts_with("duplicates")
 				.conflicts_with("uniques")
 				.conflicts_with("compare_dir")
-				.short("a")
+				.short('a')
 				.required(false)
 				.takes_value(false)
 				.help("List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates."),
 		).arg(
 			Arg::with_name("compare_dir")
 				.long("compare")
-				.short("c")
+				.short('c')
 				.required(false)
 				.takes_value(true)
 				.conflicts_with("all")
@@ -239,7 +239,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 		).arg(
 			Arg::with_name("any-file")
 				.long("any-file")
-				.short("y")
+				.short('y')
 				.required(false)
 				.takes_value(false)
 				.help("Tests every file to see if it might be an image regardless of file extension. Allows image files with no extension."),
@@ -252,7 +252,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 		).arg(
 			Arg::with_name("num_threads")
 				.long("threads")
-				.short("t")
+				.short('t')
 				.required(false)
 				.takes_value(true)
 				.help("Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.")
@@ -265,7 +265,7 @@ fn get_command_line_arguments() ->  ArgMatches<'static> {
 		).arg(
 			Arg::with_name("debug")
 				.long("debug")
-				.short("g")
+				.short('g')
 				.required(false)
 				.takes_value(false)
 				.conflicts_with("compare_dir")

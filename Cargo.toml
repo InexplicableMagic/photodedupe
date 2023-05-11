@@ -1,17 +1,17 @@
 [package]
 name = "photodedupe"
 version = "0.1.0"
-authors = ["InexplicableMagic"]
+authors = ["deiviuds"]
 edition = "2018"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.23.14"
+image = "0.24.6"
 thiserror = "1.0.26"
-clap = "2.33.3"
+clap = "3.2.25"
 walkdir = "2"
 threadpool = "1.8.1"
-indicatif = "0.15.0"
+indicatif = "0.17.3"
 glob = "0.3.0"
