@@ -5,7 +5,7 @@ extern crate indicatif;
 use std::path::Path;
 use std::ffi::OsStr;
 use std::io::{self, BufRead};
-use clap::{Arg, App, ArgMatches, value_t};
+use clap::Parser;
 use std::collections::HashSet;
 use std::collections::HashMap;
 use walkdir::{DirEntry, WalkDir};
@@ -16,17 +16,65 @@ use indicatif::ProgressBar;
 mod imagehash;
 mod image_error;
 
-
+/// PhotoDedupe
+#[derive(Parser, Debug)]
+#[command(author="InexplicableMagic https://github.com/InexplicableMagic", version="1.0.0")]
+struct Args {
+    
+    /// List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images.
+    #[arg(short, long,  required = false, conflicts_with_all = &["uniques", "all"]) ]
+    duplicates: bool,
+    
+    /// List only the best (highest resolution) version of each valid image without listing any duplicates.
+    #[arg(short, long, required = false, conflicts_with_all = &["duplicates", "all"]) ]
+    uniques: bool,
+    
+    /// List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates.
+    #[arg(short, long, required = false, conflicts_with_all = &["uniques", "duplicates"]) ]
+    all: bool,
+    
+    /// Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution
+    #[arg(short, long="compare", required = false)]
+    compare_dir: Option<String>,
+    
+    /// When using --compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality.
+    #[arg(long = "ignore-resolution", required = false ) ]
+    always_mark_duplicates: bool,
+    
+    /// Tests every file to see if it might be an image regardless of file extension. Allows image files with no extension.
+    #[arg(short = 'y', long, required=false) ]
+    any_file: bool,
+    
+    /// Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images.
+    #[arg(long, required = false) ]
+    force_colour_diff_only: bool,
+    
+    /// Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.
+    #[arg(short = 't', long = "threads", required=false) ]
+    num_threads: Option<u32>,
+    
+    /// Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)
+    #[arg(long, required=false, name="colour-diff-threshold" ) ]
+    colour_diff_threshold: Option<u32>,
+    
+    /// debug
+    #[arg(short = 'g', long, required = false, conflicts_with_all = &["uniques", "duplicates", "all", "compare_dir"]) ]
+    debug: bool,
+    
+    #[arg(name = "FILES", required = false)]
+    dir_or_file: Option<Vec<String>>
+    
+}
 
 fn main() {
 	
 	//Process command line arguments
-	let matches = get_command_line_arguments();
+	let matches = Args::parse();
 	
 	//Set the configuration options based on the command line
 	match set_config_options( &matches ) {
 		Ok(config) => {
-			if !matches.is_present("debug") {
+			if !matches.debug {
 				//Gather the list of files to inspect
 				match collate_file_list_any_source( &matches, &config ) {
 					Some(mut dedup_file_list) => {
@@ -62,21 +110,21 @@ fn main() {
 }
 
 //Debug function to compare two images and return the internal statistics
-fn debug_mode( matches: &ArgMatches, config : &imagehash::ConfigOptions ) {
+fn debug_mode( matches: &Args, config : &imagehash::ConfigOptions ) {
 	
-		match matches.values_of("dir_or_file"){
-			Some(mut paths) => {
+		match &matches.dir_or_file{
+			Some(ref paths) => {
 				if paths.len() < 1 || paths.len() > 2 {
 					eprintln!("Error: Debug mode requires either exactly 1 or 2 paths to images.");
 				}else{
-					match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false }  )	{
+					match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.first().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false }  )	{
 						Ok(a) => {
 							eprintln!("Pixel std_dev First:  {} ", a.std_dev );
 							eprintln!("Grey Hash First:  {:x} ", a.grey_hash);
 							
 								
-							if paths.len() > 0 {		
-								match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.next().unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false } ) {
+							if paths.len() > 1 {		
+								match imagehash::ImageHashAV::new( &imagehash::ImagePath{ fpath: paths.get(1).unwrap().to_string(), is_compare_dir: false, always_mark_dupe_compare: false } ) {
 									Ok(b) => {
 										eprintln!("Grey Hash Second: {:x} ", b.grey_hash);
 										eprintln!("Are grey hashes identical?: {}", (b.grey_hash == a.grey_hash) );
@@ -122,166 +170,57 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 }
 
 
-fn set_config_options( matches : &ArgMatches ) -> Result<imagehash::ConfigOptions,String> {
+fn set_config_options( matches : &Args ) -> Result<imagehash::ConfigOptions,String> {
 	
 	let mut config : imagehash::ConfigOptions = get_default_config_options();
 	
-	config.only_list_duplicates = matches.is_present("duplicates");
-	config.only_list_uniques = matches.is_present("uniques");
-	config.list_all = matches.is_present("all");
-	config.alg_colour_diff_only = matches.is_present("force_colour_diff_only");
-	config.always_mark_duplicates = matches.is_present("always_mark_duplicates");
+	config.only_list_duplicates = matches.duplicates;
+	config.only_list_uniques = matches.uniques;
+	config.list_all = matches.all;
+	config.alg_colour_diff_only = matches.force_colour_diff_only;
+	config.always_mark_duplicates = matches.always_mark_duplicates;
 	
-	if matches.is_present("any-file") {
+	if matches.any_file {
 		config.only_known_file_extensions = false;
 	}
 
-	if matches.is_present("num_threads") {
-		match value_t!(matches.value_of("num_threads"), u32) {
-			Ok(num_threads) => {
-				if num_threads < 1 {
-					return Err("Number of threads must be greater than 0".to_string());
-				}
-				
-				config.num_threads = num_threads;
-			},
-			Err(e) => {
-				return Err(format!("Error for the --threads option: {}",e.to_string()));
+	match matches.num_threads {
+		Some(num_threads) => {
+			if num_threads < 1 {
+				return Err("Number of threads must be greater than 0".to_string());
 			}
-		}
+			
+			config.num_threads = num_threads;
+		}, None => {}
 	}
 	
-	if matches.is_present("colour_diff_threshold") {
-		match value_t!(matches.value_of("colour_diff_threshold"), u32) {
-			Ok(colour_diff_threshold) => {
-				if colour_diff_threshold > 49000 {
-					return Err("colour_diff_threshold must be between 0 - 49000 inclusive.".to_string());
-				}
-				config.colour_difference_threshold = colour_diff_threshold as u64;
-			},
-			Err(e) => {
-				return Err(format!("Error for the colour_diff_threshold option: {}",e.to_string()));
+	match matches.colour_diff_threshold {
+		Some(colour_diff_threshold) =>  {
+			if colour_diff_threshold > 49000 {
+				return Err("colour_diff_threshold must be between 0 - 49000 inclusive.".to_string());
 			}
-		}
+			config.colour_difference_threshold = colour_diff_threshold as u64;
+		}, None => {}
 	}
 
-	if matches.is_present("compare_dir") {
-		match value_t!(matches.value_of("compare_dir"), String) {
-			Ok(c_dir) => {
-				let dir_test = Path::new(&c_dir);
-				if dir_test.is_dir() || dir_test.is_file() {
-					config.compare_dir = c_dir;
-					config.am_comparing  = true;
-				}else{
-					return Err(format!("Option to --compare \"{}\" is not a valid directory or file.", c_dir));
-				}
-			},
-			Err(e) => {
-				return Err(format!("Error for the --compare option: {}",e.to_string()));
+
+	match &matches.compare_dir {
+		Some(ref c_dir) => {
+			let dir_test = Path::new(&c_dir);
+			if dir_test.is_dir() || dir_test.is_file() {
+				config.compare_dir = c_dir.to_string();
+				config.am_comparing  = true;
+			}else{
+				return Err(format!("Option to --compare \"{}\" is not a valid directory or file.", c_dir));
 			}
-		}
-
+		}, None => {}
 	}
-
 	
 	return Ok(config);
 	
 }
 
-fn get_command_line_arguments() ->  ArgMatches<'static> {
-		let matches =  App::new("Photo Deduplicator")
-		.author("InexplicableMagic https://github.com/InexplicableMagic")
-		.version("0.3.1")
-		.about("Locates duplicates of photos")
-		.arg(
-			Arg::with_name("duplicates")
-				.long("duplicates")
-				.conflicts_with("uniques")
-				.conflicts_with("all")
-				.short("d")
-				.required(false)
-				.takes_value(false)
-				.help("List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images."),
-		).arg(
-			Arg::with_name("uniques")
-				.long("uniques")
-				.conflicts_with("duplicates")
-				.conflicts_with("all")
-				.short("u")
-				.required(false)
-				.takes_value(false)
-				.help("List only the best (highest resolution) version of each valid image without listing any duplicates."),
-		).arg(
-			Arg::with_name("all")
-				.long("all")
-				.conflicts_with("duplicates")
-				.conflicts_with("uniques")
-				.conflicts_with("compare_dir")
-				.short("a")
-				.required(false)
-				.takes_value(false)
-				.help("List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates."),
-		).arg(
-			Arg::with_name("compare_dir")
-				.long("compare")
-				.short("c")
-				.required(false)
-				.takes_value(true)
-				.conflicts_with("all")
-				.help("Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution"),
-		).arg(
-			Arg::with_name("always_mark_duplicates")
-				.long("ignore-resolution")
-				.required(false)
-				.requires("compare_dir")
-				.takes_value(false)
-				.help("When using --compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality."),
-		).arg(
-			Arg::with_name("any-file")
-				.long("any-file")
-				.short("y")
-				.required(false)
-				.takes_value(false)
-				.help("Tests every file to see if it might be an image regardless of file extension. Allows image files with no extension."),
-		).arg(
-			Arg::with_name("force_colour_diff_only")
-				.long("force-colour-diff-only")
-				.required(false)
-				.takes_value(false)
-				.help("Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images."),
-		).arg(
-			Arg::with_name("num_threads")
-				.long("threads")
-				.short("t")
-				.required(false)
-				.takes_value(true)
-				.help("Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.")
-		).arg(
-			Arg::with_name("colour_diff_threshold")
-				.long("colour-diff-threshold")
-				.required(false)
-				.takes_value(true)
-				.help("Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)")
-		).arg(
-			Arg::with_name("debug")
-				.long("debug")
-				.short("g")
-				.required(false)
-				.takes_value(false)
-				.conflicts_with("compare_dir")
-				.conflicts_with("all")
-				.conflicts_with("duplicates")
-				.conflicts_with("uniques")
-				.help("Debug mode. Compare two files and explain why the files are either duplicates or unique."),
-        ).arg(Arg::with_name("dir_or_file")
-         .multiple(true))
-        .get_matches();
-        
-        return matches;
-}
-
-
-fn collate_file_list_any_source( matches: &ArgMatches, config: &imagehash::ConfigOptions ) -> Option<Vec<imagehash::ImagePath>> {
+fn collate_file_list_any_source( matches: &Args, config: &imagehash::ConfigOptions ) -> Option<Vec<imagehash::ImagePath>> {
 	
 	match gather_file_list_from_cmd_line( &matches ) {
 		Some( st_files ) => {
@@ -324,17 +263,21 @@ fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 
 
 //Read the command line arguments and generate a complete list of files to be traversed
-fn gather_file_list_from_cmd_line( matches: &ArgMatches ) -> Option<Vec<String>> {
+fn gather_file_list_from_cmd_line( matches: &Args ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
-	let iterator = matches.values_of("dir_or_file")?;
+	match &matches.dir_or_file {
+		
+		Some(ref paths) => {
+			for file_or_dir in paths {
+				path_list.push( file_or_dir.to_string() );
+			}
+			
+			if path_list.len() < 1 {
+				return None;
+			}
+		}, None => {}
 	
-	for file_or_dir in iterator {
-		path_list.push( file_or_dir.to_string() );
-	}
-	
-	if path_list.len() < 1 {
-		return None;
 	}
 	
 	return Some( path_list );

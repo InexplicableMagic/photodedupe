@@ -193,7 +193,7 @@ impl ImageHashAV {
 		let mut diff: u64 = 0;
 		
 		for i in 0..64 {
-			let rdiff : u32 = (comp.low_res[(i*3)] as i32 - self.low_res[(i*3)] as i32).abs() as u32;
+			let rdiff : u32 = (comp.low_res[i*3] as i32 - self.low_res[i*3] as i32).abs() as u32;
 			let gdiff : u32 = (comp.low_res[(i*3)+1] as i32 - self.low_res[(i*3)+1] as i32).abs() as u32;
 			let bdiff : u32 = (comp.low_res[(i*3)+2] as i32 - self.low_res[(i*3)+2] as i32).abs() as u32;
 			
@@ -232,7 +232,7 @@ impl ImageHashAV {
 		let mut b_square_total : f32 = 0.0;
 		
 		for i in 0..64 {
-			r_pixel_av += self.low_res[(i*3)] as f32;
+			r_pixel_av += self.low_res[i*3] as f32;
 			g_pixel_av += self.low_res[(i*3)+1] as f32;
 			b_pixel_av += self.low_res[(i*3)+2] as f32;
 		}
@@ -241,7 +241,7 @@ impl ImageHashAV {
 		b_pixel_av /= 64.0;
 		
 		for i in 0..64 {
-			r_square_total += ( (self.low_res[(i*3)] as f32) - r_pixel_av ).powf(2f32);
+			r_square_total += ( (self.low_res[i*3] as f32) - r_pixel_av ).powf(2f32);
 			g_square_total += ( (self.low_res[(i*3)+1] as f32) - g_pixel_av ).powf(2f32);
 			b_square_total += ( (self.low_res[(i*3)+2] as f32) - b_pixel_av ).powf(2f32);
 		}
@@ -312,8 +312,8 @@ impl ImageHashAV {
 				//Add the pixels of the low res original image into the struct
 				let mut pnum : usize = 0;
 				for pixel in scaled.pixels() {
-					self.low_res[(pnum*3)] = ((pixel.2)[0]).into();
-					self.low_res[((pnum*3)+1)] = ((pixel.2)[1]).into();
+					self.low_res[pnum*3] = ((pixel.2)[0]).into();
+					self.low_res[(pnum*3)+1] = ((pixel.2)[1]).into();
 					self.low_res[(pnum*3)+2] = ((pixel.2)[2]).into();
 					pnum+=1;
 				}
