@@ -33,15 +33,15 @@ struct Args {
     #[arg(short, long, required = false, conflicts_with_all = &["uniques", "duplicates"]) ]
     all: bool,
     
-    /// Compare a directory of new images with an existing image collection. Identifies which of the new images are duplicates or unique with respect the existing collection depending on use of either the --duplicates or --uniques option. When used with --duplicates, by default doesn't identify duplicates where the new image is better quality than any version in the existing collection. To always mark as a duplicate regardless additionally use --ignore-resolution
-    #[arg(short, long="compare", required = false)]
+    /// Compares a directory of new images (supplied as the parameter to --compare) with one or more directories comprising an existing image collection (supplied as arguments). Tests whether each of the new images are duplicates of the existing image collection or unique depending on use of either the --duplicates or --uniques options respectively. When used with --duplicates, new images are classified as unique when of higher resolution than the version in the existing image collection. To mark similar images as duplicates in all circumstances (irrespective of resolution), additionally apply the --ignore-resolution option.
+    #[arg(short, long="compare", required = false, value_name="directory of new images")]
     compare_dir: Option<String>,
     
     /// When using --compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality.
     #[arg(long = "ignore-resolution", required = false ) ]
     always_mark_duplicates: bool,
     
-    /// Tests every file to see if it might be an image regardless of file extension. Allows image files with no extension.
+    /// Tests every file to see if it might be an image regardless of file extension. Also allows image files with no extension. The default behaviour is to only test files with common image filename extensions which are jpg,jpeg,png,tif,tiff,gif and webp.
     #[arg(short = 'y', long, required=false) ]
     any_file: bool,
     
@@ -50,14 +50,14 @@ struct Args {
     force_colour_diff_only: bool,
     
     /// Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available.
-    #[arg(short = 't', long = "threads", required=false) ]
+    #[arg(short = 't', long = "threads", required=false, value_name="number of threads") ]
     num_threads: Option<u32>,
     
     /// Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)
-    #[arg(long, required=false, name="colour-diff-threshold" ) ]
+    #[arg(long, required=false, name="colour-diff-threshold", value_name="threshold" ) ]
     colour_diff_threshold: Option<u32>,
     
-    /// debug
+    /// Expects either one or two image file arguments. Where one file is supplied, prints statistics about the file. Where two are supplied prints statistics and information about the differences found between the files.
     #[arg(short = 'g', long, required = false, conflicts_with_all = &["uniques", "duplicates", "all", "compare_dir"]) ]
     debug: bool,
     
@@ -290,7 +290,7 @@ fn valid_file_extension( fpath: &Path, config: &imagehash::ConfigOptions ) -> bo
 	
 	//ToDo: Move generation of this list outside function
    	//List of known image file extensions
-	let known_extensions: HashSet<&str> = [ "jpg", "jpeg", "png", "tif", "tiff", "gif" ].iter().cloned().collect();
+	let known_extensions: HashSet<&str> = [ "jpg", "jpeg", "png", "tif", "tiff", "gif", "webp" ].iter().cloned().collect();
 	
 	//If any-file is not set, only tests a limited list of file extensions
 	if config.only_known_file_extensions {

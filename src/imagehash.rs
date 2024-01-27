@@ -160,7 +160,7 @@ impl ImageHashAV {
 		
 	pub const DEFAULT_COLOUR_DIFF_THRESHOLD: u64 = 256;	//Default colour difference threshold under which two images are declared dupes
 	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;	//Default colour variation threshold under which de-duplication is not attempted
-	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 20000; //Number of files at which we flip to the less accurate but faster algorithm
+	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 50000; //Number of files at which we flip to the less accurate but faster algorithm
 		
 	pub fn new(fpath : &ImagePath) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
