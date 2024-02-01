@@ -412,7 +412,7 @@ fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imag
 		progress_bar.inc(1);
 		
 	}
-	progress_bar.finish();
+	progress_bar.finish_and_clear();
 		
 	//Print any errors that ocurred while producing the hashes
 	for e in error_list {
@@ -499,6 +499,9 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 	
 	let mut dupes_groups : HashMap<usize,u64> = HashMap::new();
 	
+	//Display a 2nd progress bar as this can take a long time
+	let progress_bar = ProgressBar::new(image_hash_results.len() as u64);
+	
 	for i in 0..image_hash_results.len() {
 		
 		for j in (i+1)..image_hash_results.len() {	
@@ -522,7 +525,11 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 					}	
 			dgroup +=1;
 		}
+
+		progress_bar.inc(1)
 	}
+	
+	progress_bar.finish_and_clear();
 }
 
 //Print the detected duplicates based on the command line options
