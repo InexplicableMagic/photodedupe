@@ -40,6 +40,8 @@ pub struct ConfigOptions {
 	pub compare_dir : String,			//The path to the comparison directory
 	pub am_comparing : bool,			//If the --compare option is used
 	pub always_mark_duplicates : bool,		//If the --always-mark-duplicates option is used
+	pub min_width : u32,				//The minimum accepted image width
+	pub min_height : u32,				//The minimum accepted image height
 }
 
 /**
@@ -162,11 +164,11 @@ impl ImageHashAV {
 	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;	//Default colour variation threshold under which de-duplication is not attempted
 	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 50000; //Number of files at which we flip to the less accurate but faster algorithm
 		
-	pub fn new(fpath : &ImagePath) -> Result<ImageHashAV,MyImageError> {
+	pub fn new(fpath : &ImagePath, min_width: u32, min_height : u32) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
 						width: 0, height: 0, num_pixels: 0, std_dev: 0f32, 
 						file_size: 0, image_path : ImagePath { fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
-		match object.calc_image_hash( &fpath ) {
+		match object.calc_image_hash( &fpath,  min_width, min_height ) {
 			Some(e) => return Err(e),
 			None => return Ok(object),
 		}
@@ -254,13 +256,19 @@ impl ImageHashAV {
 		
 	}
 	
-	pub fn calc_image_hash(&mut self, im_path: &ImagePath ) -> Option<MyImageError> {
+	pub fn calc_image_hash(&mut self, im_path: &ImagePath, min_width: u32, min_height : u32 ) -> Option<MyImageError> {
 		   
 		match load_image_from_file( &im_path.fpath ) {
 			Ok(img) => {
 				let (width, height) = img.dimensions();
 				if width < 16 || height < 16 {
 					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", im_path.fpath).to_string()) );
+				}
+				
+				if min_width > 0 && min_height > 0 {
+					if width < min_width || height < min_height {
+						return Some( MyImageError::ImageTooSmall(format!("Warning: Ignored image because dimensions ({},{}) are below minimum: {}",width,height, im_path.fpath).to_string()) );
+					}
 				}
 		
 				self.width = width;
@@ -352,7 +360,7 @@ mod tests {
 	//Test an image is read and metadata extracted correctly
 	#[test]
 	fn test_image_read() {
-		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
 		assert_eq!(768,result.width,"Width OK");
 		assert_eq!(576,result.height,"Height OK");
 		assert_eq!(576*768,result.num_pixels,"NUm pixels OK");
@@ -379,9 +387,9 @@ mod tests {
 	
 		//Check the best image matches the two duplicates
 		for i in 0..(image_paths.len()/3) {
-			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
-			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
-			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath: image_paths[i*3].clone(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
+			let dupe1 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+1].clone(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
+			let dupe2 = ImageHashAV::new( &ImagePath { fpath:  image_paths[(i*3)+2].clone(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
 		
 			//Check the duplicates match the best versions within a hamming distance of 1 bit (max 64 bits can be similar)
 			assert!( calc_hamming_distance(result.dupe_group, dupe1.dupe_group) >= 63, "First duplicate grey hash matches" );
@@ -407,7 +415,7 @@ mod tests {
 		}
 	
 		for path in &image_paths {
-			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false, always_mark_dupe_compare: false } ).unwrap();
+			let result = ImageHashAV::new( &ImagePath { fpath:  path.to_string(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
 			image_hashes.push( result );
 		}
 		
