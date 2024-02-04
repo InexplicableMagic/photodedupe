@@ -10,49 +10,76 @@ use crate::image_error::MyImageError;
 
 #[derive(Clone)]
 pub struct ImagePath {
-	pub fpath: String,		//The path to a valid image file
-	pub is_compare_dir : bool,	//True if the image exists in the new images comparison dir (false if feature not in use or else in existing collection)
-	pub always_mark_dupe_compare : bool, //True if when using --compare a duplicate should always be marked even if a better quality than the existing image
+	/// The path to a valid image file
+	pub fpath: String,
+	/// True if the image exists in the new images comparison dir (false if feature not in use or else in existing collection)	
+	pub is_compare_dir : bool,
+	/// True if when using --compare a duplicate should always be marked even if a better quality than the existing image
+	pub always_mark_dupe_compare : bool,
 }
 
+/// Statistics about an image that are used to perform the deduplication
 pub struct ImageHashAV {
-	pub dupe_group : u64 ,		//A common key to group potential duplicates - same integer means possible (but not yet confirmed) dupe
-	pub grey_hash : u64,		//A hash code of a greyscale low resolution version of the image
-	pub low_res : [u8;192],		//The pixels of a colour low resolution version of the image
-	pub width: u32,			//Width of the original image in pixels
-	pub height: u32,		//Height of the original image in pixels
-	pub file_size : u64,		//File size in bytes
-	pub num_pixels: u64,		//Total number of pixels in the original image
-	pub std_dev : f32,		//Standard deviation of colour values from the mean (used to avoid testing images with low variation)
-	pub image_path: ImagePath,	//The path to the image
+	/// A common key to group potential duplicates - same integer means possible (but not yet confirmed) dupe
+	pub dupe_group : u64 ,
+	/// A perceptual hash code of a greyscale low resolution version of the image
+	pub grey_hash : u64,
+	/// The pixels of a colour low resolution version of the image
+	pub low_res : [u8;192],
+	/// Width of the original image in pixels
+	pub width: u32,
+	/// Height of the original image in pixels
+	pub height: u32,
+	/// File size in bytes
+	pub file_size : u64,
+	/// Total number of pixels in the original image
+	pub num_pixels: u64,
+	/// Standard deviation of colour values from the mean (used to avoid testing images with low variation)
+	pub std_dev : f32,
+	/// The path to the image
+	pub image_path: ImagePath,
 }
 
+/// Holds the configuration options that are set on the command line
 pub struct ConfigOptions {
+	/// Controls how likely the system is to determine an image is a duplicate
 	pub colour_difference_threshold : u64,
-	pub std_dev_threshold : f32,
+	/// Controls a threshold below which it will declare images unique that the system can't work with (e.g. very dark images)
+	pub std_dev_threshold : f32,			
+	/// The number of images at which a faster algorithm is used
 	pub alg_flip_threshold : u64,
+	/// Force use of the more computationally expensive but more accurate algorithm
 	pub alg_colour_diff_only : bool,
+	/// Only consider known image file extensions e.g. .jpg .png etc
 	pub only_known_file_extensions : bool,
+	/// Option to only list the duplicates found and not the best versions of each image
 	pub only_list_duplicates : bool,
+	/// Option to only list the uniques images found and not the duplicates
 	pub only_list_uniques : bool,
+	/// Whether to output all images found as opposed to just those with duplicates
 	pub list_all : bool,
+	/// How many threads to use to process images
 	pub num_threads : u32,
-	pub compare_dir : String,			//The path to the comparison directory
-	pub am_comparing : bool,			//If the --compare option is used
-	pub always_mark_duplicates : bool,		//If the --always-mark-duplicates option is used
-	pub min_width : u32,				//The minimum accepted image width
-	pub min_height : u32,				//The minimum accepted image height
+	/// The path to the comparison directory			
+	pub compare_dir : String,
+	/// If the --compare option is used
+	pub am_comparing : bool,
+	/// If the --always-mark-duplicates option is used
+	pub always_mark_duplicates : bool,
+	/// The minimum accepted image width
+	pub min_width : u32,
+	/// The minimum accepted image height
+	pub min_height : u32,
 }
 
-/**
- * Order the images with the following keys
- *  1st) The dupe_group (ascending)
- *  2nd) If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
- *  3rd) The total number of pixels (descending) - prefers higher resolution images as better quality
- *  4th) The file size (descending) - prefers larger images as better quality where they are the same resolution
- *  5th) Where --compare is used, prefers the image in the original collection and the new image will be the duplicate
- * 
- */
+
+/// Describes the sort order for ImageHashAV objects
+/// Order the images with the following keys
+/// 1st) The dupe_group (ascending)
+/// 2nd) If the comparison image is in the --compare directory, sort further down the list if the --always-mark-duplicates option is set
+/// 3rd) The total number of pixels (descending) - prefers higher resolution images as better quality
+/// 4th) The file size (descending) - prefers larger images as better quality where they are the same resolution
+/// 5th) Where --compare is used, prefers the image in the original collection and the new image will be the duplicate 
 impl Ord for ImageHashAV {
 	
     fn cmp(&self, other: &Self) -> Ordering {
@@ -127,8 +154,7 @@ impl PartialEq for ImageHashAV {
     }
 }
 
-//Open an image from the specific path
-//Tries to guess the format if it's not known
+///Open an image from the specific path. Tries to guess the format if it's not known.
 fn load_image_from_file( image_path: &str  ) -> std::result::Result<DynamicImage, MyImageError> {
 	
 	
@@ -159,10 +185,13 @@ fn load_image_from_file( image_path: &str  ) -> std::result::Result<DynamicImage
 
 
 impl ImageHashAV {
-		
-	pub const DEFAULT_COLOUR_DIFF_THRESHOLD: u64 = 256;	//Default colour difference threshold under which two images are declared dupes
-	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;	//Default colour variation threshold under which de-duplication is not attempted
-	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 50000; //Number of files at which we flip to the less accurate but faster algorithm
+	
+	/// Default colour difference threshold under which two images are declared dupes
+	pub const DEFAULT_COLOUR_DIFF_THRESHOLD: u64 = 256;	
+	/// Default colour variation threshold under which de-duplication is not attempted
+	pub const DEFAULT_STD_DEV_THRESHOLD : f32 = 3.0;
+	/// Number of files at which we flip to the less accurate but faster algorithm
+	pub const DEFAULT_ALG_FLIP_THRESHOLD : u64 = 50000;
 		
 	pub fn new(fpath : &ImagePath, min_width: u32, min_height : u32) -> Result<ImageHashAV,MyImageError> {
 		let mut object = ImageHashAV {	dupe_group: 0, grey_hash: 0, low_res: [0;192], 
@@ -174,7 +203,7 @@ impl ImageHashAV {
 		}
 	}
 	
-	//Check if two aspect ratios are within 2% of each other
+	/// Check if two image aspect ratios are within 2% of each other
 	pub fn has_similar_aspect_ratio( &self, comp: &ImageHashAV ) -> bool {
 		let aspect_ratio_a : f32 = self.width as f32 / self.height as f32;
 		let aspect_ratio_b : f32 = comp.width as f32 / comp.height as f32;
@@ -189,7 +218,7 @@ impl ImageHashAV {
 		return false;
 	}
 	
-	//Difference between the low_res version of this and another imagehash
+	/// Difference between the low_res version of this and another imagehash
 	pub fn diff_colour( &self, comp: &ImageHashAV ) -> u64{
 		
 		let mut diff: u64 = 0;
@@ -206,7 +235,7 @@ impl ImageHashAV {
 		
 	}
 	
-	//Test if two images are duplicates of each other
+	/// Test if two images are duplicates of each other by looking at the comparitive variance in the colours
 	pub fn is_dupe ( &self, other : &ImageHashAV, config: &ConfigOptions ) -> bool {
 
 		//Excludes dark images with little variation which are difficult to dedupe correctly
@@ -223,7 +252,7 @@ impl ImageHashAV {
 		return false;
 	}
 	
-	//For each colour channel calculate the stdv of the pixels values and then take the average of the colour channels
+	/// For each colour channel calculate the stdv of the pixels values and then take the average of the colour channels
 	pub fn calc_std_dev_colour_hash ( &mut self ) {
 		
 		let mut r_pixel_av : f32 = 0.0;
@@ -256,10 +285,13 @@ impl ImageHashAV {
 		
 	}
 	
+	/// Populates image statistics including the perceptual hash
 	pub fn calc_image_hash(&mut self, im_path: &ImagePath, min_width: u32, min_height : u32 ) -> Option<MyImageError> {
 		   
 		match load_image_from_file( &im_path.fpath ) {
 			Ok(img) => {
+			
+				//Ignore very small images that the technique can't work with and also images below the user configured size
 				let (width, height) = img.dimensions();
 				if width < 16 || height < 16 {
 					return Some( MyImageError::ImageTooSmall(format!("Warning: Image too small to deduplicate: {}", im_path.fpath).to_string()) );
@@ -346,7 +378,7 @@ mod tests {
 	use super::*;
 	use glob::glob;
 
-	//Helper function to report the number of bits the same between two 64 bit values
+	/// Helper function to report the number of bits the same between two 64 bit values
     	fn calc_hamming_distance( a: u64, b: u64) -> u8 {
 		let mut bits_similar : u8 = 0;
 		for i in 0..64 {
@@ -357,7 +389,7 @@ mod tests {
 		return bits_similar;
 	}
 
-	//Test an image is read and metadata extracted correctly
+	/// Test an image is read and metadata extracted correctly
 	#[test]
 	fn test_image_read() {
 		let result = ImageHashAV::new( &ImagePath { fpath: "unit_test_images/bridge1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
@@ -366,7 +398,7 @@ mod tests {
 		assert_eq!(576*768,result.num_pixels,"NUm pixels OK");
 	}
     
-	//Test that images that should be duplicates of each other are correctly identified
+	/// Test that images that should be duplicates of each other are correctly identified
 	#[test]
 	fn test_image_duplicates() {
 		let mut image_paths = Vec::new();
@@ -400,7 +432,7 @@ mod tests {
 		}			
 	}
     
-	//Test that images which should not be duplicates of each other do not match
+	/// Test that images which should not be duplicates of each other do not match
 	#[test]
 	fn test_image_uniques() {
 		let mut image_paths = Vec::new();

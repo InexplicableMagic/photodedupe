@@ -1,3 +1,16 @@
+//!
+//!	PhotoDedupe
+//!	-----------
+//!	Photodedupe is a utility for identifying duplicate photos regardless of file name, image resolution, compression settings or file format. 
+//!	It compares the image content visually and does not rely on any metadata to perform the de-duplication.
+//!	
+//!	`Usage`: photodedupe \<dir of images\>
+//!	
+//!	`Source`: [GitHub: InexplicableMagic/photodedupe](https://github.com/InexplicableMagic/photodedupe)
+//!
+//!	`License`: [MIT](https://mit-license.org/)
+
+
 extern crate clap;
 extern crate walkdir;
 extern crate indicatif;
@@ -16,9 +29,9 @@ use indicatif::ProgressBar;
 mod imagehash;
 mod image_error;
 
-/// PhotoDedupe
+/// PhotoDedupe: A utility for detecting duplicate photos in a collection of images
 #[derive(Parser, Debug)]
-#[command(author="InexplicableMagic https://github.com/InexplicableMagic", version="1.0.0")]
+#[command(version="1.0.0")]
 struct Args {
     
     /// List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images.
@@ -29,7 +42,7 @@ struct Args {
     #[arg(short, long, required = false, conflicts_with_all = &["duplicates", "all"]) ]
     uniques: bool,
     
-    /// List every unique image found and the duplicates of each image grouped together and indented. Lists all unique images even if there are no duplicates.
+    /// By default photodedupe lists only images that have duplicates. This option causes all valid image files to be listed (except those below the minimum resolution if --min-resolution is used) regardless of whether the file has a duplicate.
     #[arg(short, long, required = false, conflicts_with_all = &["uniques", "duplicates"]) ]
     all: bool,
     
@@ -49,7 +62,7 @@ struct Args {
     #[arg(short = 'y', long, required=false) ]
     any_file: bool,
     
-    /// Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images.
+    /// Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images. This algorithm is used by default with 50,000 or fewer images.
     #[arg(long, required = false) ]
     force_colour_diff_only: bool,
     
@@ -67,7 +80,6 @@ struct Args {
     
     #[arg(name = "Files/Directories", required = false)]
     dir_or_file: Option<Vec<String>>
-    
 }
 
 fn main() {
@@ -83,7 +95,7 @@ fn main() {
 				match collate_file_list_any_source( &matches, &config ) {
 					Some(mut dedup_file_list) => {
 						
-						//Add int the images from the comparison directory
+						//Add in the images from the comparison directory
 						if config.am_comparing {
 							let mut path_list  : Vec<String> = Vec::new();
 							path_list.push(config.compare_dir.clone());
@@ -101,7 +113,7 @@ fn main() {
 						
 					},
 					None => {
-						eprintln!("Didn't find any image files to test");
+						eprintln!("Error: Didn't find any image files to test");
 					},
 				}
 			
@@ -113,7 +125,7 @@ fn main() {
 	}
 }
 
-//Debug function to compare two images and return the internal statistics
+/// Debug function to print internal statistics for an image. If two images are supplied, also compares them.
 fn debug_mode( matches: &Args, config : &imagehash::ConfigOptions ) {
 	
 		match &matches.dir_or_file{
@@ -157,6 +169,7 @@ fn debug_mode( matches: &Args, config : &imagehash::ConfigOptions ) {
 		  
 }
 
+/// Returns a command line configuration options object with a set of reasonable defaults configured
 fn get_default_config_options() -> imagehash::ConfigOptions {
 	return imagehash::ConfigOptions { colour_difference_threshold: imagehash::ImageHashAV::DEFAULT_COLOUR_DIFF_THRESHOLD, 
 												std_dev_threshold : imagehash::ImageHashAV::DEFAULT_STD_DEV_THRESHOLD,
@@ -175,7 +188,7 @@ fn get_default_config_options() -> imagehash::ConfigOptions {
 									};
 }
 
-
+/// Converts configuration options set on the command line with the Clap module into the internal configuration options object
 fn set_config_options( matches : &Args ) -> Result<imagehash::ConfigOptions,String> {
 	
 	let mut config : imagehash::ConfigOptions = get_default_config_options();
@@ -241,6 +254,7 @@ fn set_config_options( matches : &Args ) -> Result<imagehash::ConfigOptions,Stri
 	
 }
 
+/// Given a string of the format "widthxheight", extract the width and height as integers
 fn extract_width_and_height(s: &str) -> Option<(u32, u32)> {
     let parts: Vec<&str> = s.split('x').collect();
     if parts.len() != 2 {
@@ -254,6 +268,7 @@ fn extract_width_and_height(s: &str) -> Option<(u32, u32)> {
     }
 }
 
+/// Determines a list of image file paths that the utility is going to compare
 fn collate_file_list_any_source( matches: &Args, config: &imagehash::ConfigOptions ) -> Option<Vec<imagehash::ImagePath>> {
 	
 	match gather_file_list_from_cmd_line( &matches ) {
@@ -269,7 +284,7 @@ fn collate_file_list_any_source( matches: &Args, config: &imagehash::ConfigOptio
 	
 }
 
-//Read in the list of paths to inspect from stdin
+/// Gather a list of image file paths passed in on stdin
 fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
@@ -296,7 +311,7 @@ fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 }
 
 
-//Read the command line arguments and generate a complete list of files to be traversed
+/// Read the command line arguments and generate a complete list of files to be traversed
 fn gather_file_list_from_cmd_line( matches: &Args ) -> Option<Vec<String>> {
 	let mut path_list  : Vec<String> = Vec::new();
 	
@@ -318,11 +333,9 @@ fn gather_file_list_from_cmd_line( matches: &Args ) -> Option<Vec<String>> {
 	
 }
 
-//Only allows certain file extensions that may be images
-//Unless the user has elected to allow all files to be tested
+/// Determines if a specific file path has one of an allowed list of image file extensions
 fn valid_file_extension( fpath: &Path, config: &imagehash::ConfigOptions ) -> bool {
 	
-	//ToDo: Move generation of this list outside function
    	//List of known image file extensions
 	let known_extensions: HashSet<&str> = [ "jpg", "jpeg", "png", "tif", "tiff", "gif", "webp" ].iter().cloned().collect();
 	
@@ -343,8 +356,7 @@ fn valid_file_extension( fpath: &Path, config: &imagehash::ConfigOptions ) -> bo
 	
 }
 
-//Traverse any directories.
-//Test the file paths found are valid and unique.
+/// Recusively inspects directories and extracts all of the files found
 fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions, am_comparing : bool ) -> Vec<imagehash::ImagePath> {
   	   	
    	let mut dedup_file_list = HashSet::new();
@@ -389,7 +401,7 @@ fn gather_file_list( path_list : &Vec<String>, config: &imagehash::ConfigOptions
 			
 }
 
-//Filter out invisible directories
+/// Filter to ignore invisible files that start with a dot
 fn dir_filter(entry: &DirEntry) -> bool {
     entry.file_name()
          .to_str()
@@ -397,7 +409,7 @@ fn dir_filter(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
-//Accepts a list of file paths and returns an ordered list of metadata with possible (but not conformed) duplicates grouped together
+/// Accepts a list of file paths and returns an ordered list of metadata with possible (but not confirmed) duplicates grouped together
 fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imagehash::ConfigOptions ) -> Vec<imagehash::ImageHashAV> {
 	
 	let mut image_hash_results: Vec<imagehash::ImageHashAV> = Vec::new();
@@ -412,12 +424,17 @@ fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imag
 		return image_hash_results;
 	}
 	
+	//If there are few images, use only one thread per image
 	if file_list_size < num_threads as u64 {
 		num_threads = file_list_size as usize;
 	} 
 	
+	//Deduplication is a two step process:
+	//In step one we gather statistics about the image files
+	//In step two we then perform comparisons of the image statistics
 	
 	//Calculate the image hashes on n threads
+	//The number of threads can be set using a command line option
 	let pool = ThreadPool::new(num_threads);
 	
 	let (tx, rx) = channel();
@@ -429,6 +446,8 @@ fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imag
 	}
 	drop(tx);
 
+	//Perform step one: gather statistics
+	//Draw a progress bar for the user.
 	let progress_bar = ProgressBar::new(file_list_size);
 	
 	let mut total_images_successfully_processed : u64 = 0;
@@ -455,10 +474,13 @@ fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imag
 		eprintln!("{}", e.to_string());
 	}
 	
-	//Use this version on small image sets
+	//Now move onto step two and compare the image statistics
+	
+	//Use this algorithm on small image sets - often a little more accurate but doesn't scale well
 	if (total_images_successfully_processed <= config.alg_flip_threshold) || config.alg_colour_diff_only {
 		colour_n_square_check( &mut image_hash_results, &config );
 	}else{
+		//Use this considerably faster algorithm on larger image sets. "Large" is defined by config.alg_flip_threshold
 		eprintln!("Warn: Using less accurate comparison algorithm due to the number of images.");
 		hamming_check( &mut image_hash_results, &config );
 	}
@@ -470,14 +492,15 @@ fn run_image_hashing( dedup_file_list: Vec<imagehash::ImagePath>, config : &imag
 	
 }
 
-/* 
- * Allow hamming distance of 1. Check if flipping a bit in the greyscale hash would cause a match against another hash.
- * 
- * This iterates through checking a 1 bit change in all 64-bits of each hash and testing it against all the hashes currently in the table.
- * 
- * I perceived this was faster than testing all images against all images as n*64 < n^2 where n > 64
- * However on smaller image sets, less than about 10,000 images doing an n^2 colour check is fast enough
- */
+/// Determines if images might be duplicates using a method of checking hamming distances of perceptual hashes
+///
+/// Allow hamming distance of 1. Check if flipping a bit in the greyscale hash would cause a match against another hash.
+/// 
+/// This iterates through checking a 1 bit change in all 64-bits of each hash and testing it against all the hashes currently in the table.
+/// 
+/// I perceived this was faster than testing all images against all images as n*64 < n^2 where n > 64
+/// However on smaller image sets, less than about 50,000 images doing an n^2 colour check is fast enough
+
 fn hamming_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config : &imagehash::ConfigOptions ){
 	
 	let mut all_hash_codes = HashMap::new();
@@ -521,9 +544,7 @@ fn hamming_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config 
 	}
 }
 
-/*
- * Do an n^2 colour check - all against all check
- */
+/// Determine if images might be duplicates by using an n^2 scaling method (compares every image against every other) 
  
 fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>, config : &imagehash::ConfigOptions ){
 	
@@ -568,7 +589,7 @@ fn colour_n_square_check( image_hash_results : &mut Vec<imagehash::ImageHashAV>,
 	progress_bar.finish_and_clear();
 }
 
-//Print the detected duplicates based on the command line options
+/// Print the detected duplicates based on preferneces specified in command line options
 fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &imagehash::ConfigOptions  ){
 
 	let mut last_unique_ih: imagehash::ImageHashAV = imagehash::ImageHashAV { dupe_group: 0, grey_hash: 0, low_res: [0;192], width: 0, height: 0, num_pixels: 0, std_dev : 0f32, file_size: 0, image_path: imagehash::ImagePath{ fpath: "".to_string(), is_compare_dir: false, always_mark_dupe_compare: false } };
@@ -627,7 +648,7 @@ fn output_results( image_hash_results : Vec<imagehash::ImageHashAV> , config : &
 mod tests {	
     use super::*;
     
-    //Tests that the n square check identifies three images that should be duplicates as duplicates
+	/// Tests that the n square check identifies three images that should be duplicates as duplicates
 	#[test]
 	fn test_n_square_check() {
 		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/cat1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
@@ -645,7 +666,7 @@ mod tests {
 		assert_eq!( images[0].dupe_group, images[2].dupe_group, "Images have same dupe group" );
 	}
 	
-	//Tests that when using the hamming method images are identified as duplicates
+	/// Tests that when using the hamming method images are identified as duplicates
 	#[test]
 	fn test_hamming() {
 		let best = imagehash::ImageHashAV::new( &imagehash::ImagePath { fpath: "unit_test_images/car1_best.jpg".to_string(), is_compare_dir:false, always_mark_dupe_compare: false },0,0 ).unwrap();
