@@ -1,6 +1,5 @@
-//!
-//!	PhotoDedupe
-//!	-----------
+//!	# PhotoDedupe
+//!	
 //!	Photodedupe is a utility for identifying duplicate photos regardless of file name, image resolution, compression settings or file format. 
 //!	It compares the image content visually and does not rely on any metadata to perform the de-duplication.
 //!	
@@ -9,6 +8,8 @@
 //!	`Source`: [GitHub: InexplicableMagic/photodedupe](https://github.com/InexplicableMagic/photodedupe)
 //!
 //!	`License`: [MIT](https://mit-license.org/)
+//!
+//!	`Author` : LJ Bubb	
 
 
 extern crate clap;
@@ -291,9 +292,12 @@ fn gather_file_list_from_stdin( ) -> Option<Vec<String>> {
 	let stdin = io::stdin();
     	for line in stdin.lock().lines() {
 			match line {
-				Ok(line) => { 
-					if !line.is_empty() {
-						path_list.push( line )
+				Ok(line) => {
+					let line_trimmed  = line.trim();
+					if !line_trimmed.is_empty() {
+						//Handle Windows style linefeeds
+						let crlf_cleaned_line = line_trimmed.trim_end_matches('\r');
+						path_list.push( crlf_cleaned_line.to_string() )
 					}
 				},
 				Err(e) => {
@@ -325,7 +329,9 @@ fn gather_file_list_from_cmd_line( matches: &Args ) -> Option<Vec<String>> {
 			if path_list.len() < 1 {
 				return None;
 			}
-		}, None => {}
+		}, None => {
+			return None;
+		}
 	
 	}
 	

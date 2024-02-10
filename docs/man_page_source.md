@@ -1,17 +1,59 @@
-# Photodedupe
-**Photodedupe** is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have differing file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication. 
+# NAME
+photodedupe - a command line utility for identifying duplicate photos
+
+# SYNOPSIS
+
+photodedupe [-d|-u|-a] [DIR]
+
+# DESCRIPTION
+Photodedupe is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have differing file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication. 
 
 Where duplicates are identified, the images are sorted by resolution such that the largest version of each image appears first. It is possible to list only the highest resolution versions of all images, or alternatively to list only the duplicates (lower resolution versions). This enables the best copies of images to be extracted from a photo collection or the duplicates to be removed. This sort order is helpful for applications such as removing thumbnails from image collections or separating scaled web resolution images from the original high resolution version.
 
 The output is a list of file paths that can be piped to other commands such that the required images can be sorted into folders (example usage below). Photodedupe can work with large image collections of hundreds of thousands or millions of images and scales to any number of CPU cores.
 
-<p align="center"><img src="docs/photodedupe_readme_scaling_diagram.png" width="600" /></p>
+# OPTIONS
 
-## Downloads / Builds
+**-d, \-\-duplicates**  
+List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images
+          
+**-u, \-\-uniques**  
+List only the best (highest resolution) version of each valid image without listing any duplicates
+          
+**-a, \-\-all**  
+By default photodedupe lists only images that have duplicates. This option causes all valid image files to be listed (except those below the minimum resolution if \-\-min-resolution is used) regardless of whether the file has a duplicate
+          
+**-c, \-\-compare \<directory of new images\>**  
+Compares a directory of new images (supplied as the parameter to \-\-compare) with one or more directories comprising an existing image collection (supplied as arguments). Tests whether each of the new images are duplicates of the existing image collection or unique depending on use of either the \-\-duplicates or \-\-uniques options respectively. When used with \-\-duplicates, new images are classified as unique when of higher resolution than the version in the existing image collection. To mark similar images as duplicates in all circumstances (irrespective of resolution), additionally apply the \-\-ignore-resolution option
+          
+**\-\-ignore-resolution**  
+When using \-\-compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality
+          
+**\-\-min-resolution \<WidthxHeight\>**  
+Ignore all images of less than the specified resolution e.g. \-\-min-resolution 300x200 will ignore images if either the width is less than 300 pixels or the height is less than 200 pixels
+          
+**-y, \-\-any-file**  
+Tests every file to see if it might be an image regardless of file extension. Also allows image files with no extension. The default behaviour is to only test files with common image filename extensions which are jpg,jpeg,png,tif,tiff,gif and webp
+          
+**\-\-force-colour-diff-only**  
+Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images. This algorithm is used by default with 50,000 or fewer images. Beyond this number of images, a different perceptual hash algorithm is used than is slightly less accurate but is much faster.
+          
+**-t, \-\-threads \<number of threads\>**  
+Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available
+          
+**\-\-colour-diff-threshold \<threshold\>**  
+Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)
+          
+**-g, \-\-debug**  
+Expects either one or two image file arguments. Where one file is supplied, prints statistics about the file. Where two are supplied prints statistics and information about the differences found between the files
+          
+**-h, \-\-help**  
+Print help
+          
+**-V, \-\-version**  
+Print version
 
-Builds of photodedupe for x86 Linux, Windows and Raspberry Pi (32-bit) are available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases/).
-
-## Usage
+# EXAMPLE USAGE
 
 One or more directories can be supplied on the command line and photodedupe will recursively inspect all of them for images:
 
@@ -60,7 +102,7 @@ Photos below a user specified resolution can be ignored. In the following exampl
 
 ````photodedupe dir_of_photos/ --min-resolution 150x100````
 
-## Image Directory Diff
+## IMAGE DIRECTORY DIFF
 
 The feature enables a directory of new images to be compared against a pre-existing collection of photos to determine if any of the new images already appear in the collection. This can be used to update a photo collection with new unique images derived from a new source. An example application might be for use with a web scraper that periodically downloads all the images from a regularly updated web page. This option can be used to determine if any of the most recently downloaded images are new or if they were downloaded on a previous occasion.
 
@@ -84,7 +126,7 @@ When using ```--compare```, any duplicates present in the existing collection ar
 
 To determine where specifically the images in the new images directory appear in the existing photo collection use the ```--compare``` option alone (without either the ```--duplicates``` or ```--uniques``` flag). This will show only instances where there is a duplicate of an image in the new images directory. Only the highest resolution version will be shown from the collection (unless the version in the new images directory is the best version).
 
-### Example Behaviour of --compare
+### EXAMPLE BEHAVIOUR OF \-\-compare
 
 In the example below the directory "new_images" is passed to the ```--compare``` option and the ```--duplicates``` flag is used. The existing_collection directory is passed as an argument. All of the images in the below table are visually duplicates of each other:
 
@@ -99,7 +141,7 @@ In the example below the directory "new_images" is passed to the ```--compare```
 Image\_dupe\_1 is not shown as a duplicate because at 5 megapixels it exceeds the resolution of the best copy in the existing collection (Image\_dupe\_2), which is only 4 MP. Image\_dupe\_3 is displayed as a duplicate because at 3MP it is below the resolution of the best copy in the existing collection. Image\_dupe\_4 and Image\_dupe\_5 are not shown because they are in the existing collection and not in the new images directory.
 
 
-## Performance
+# PERFORMANCE
 
 Photodedupe uses four threads by default to process images. The number of threads can be increased using the ``--threads`` option. More than the specified number of threads may actually be used due to further multithreading within the underlying libraries.
 
@@ -111,24 +153,14 @@ Photodedupe does not detect transformations of images as duplicates. If the imag
 
 The internal threshold at which a duplicate is detected can be be tuned using the ```--colour-diff-threshold``` option which accepts an integer between 0 and 49000. The default threshold is 256. Setting this value closer to zero will cause fewer duplicates to be found. At values close to 49000 virtually all images will be declared duplicates.
 
-## Building
+# AUTHOR
 
-To build for the current architecture (e.g. build for Linux when using a Linux machine):
+Leon Bubb
 
-```cargo build --release```
+# SOURCE
 
-To build for Windows from Linux (use the above command to build for Windows when on Windows):
+[https://github.com/InexplicableMagic/photodedupe](https://github.com/InexplicableMagic/photodedupe)
 
-```
-sudo apt-get install mingw-w64
-rustup target add x86_64-pc-windows-gnu
-cargo build --target x86_64-pc-windows-gnu --release
-```
+# LICENSE
 
-To generate the man page from the markdown source:
-
-```
-cd docs
-pandoc --standalone --to man man_page_source.md -o photodedupe.1
-```
-
+[MIT](https://mit-license.org/)
