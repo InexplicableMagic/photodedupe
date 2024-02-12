@@ -1,3 +1,4 @@
+% photodedupe(1) Version 1.0.0
 # NAME
 photodedupe - a command line utility for identifying duplicate photos
 
@@ -14,44 +15,44 @@ The output is a list of file paths that can be piped to other commands such that
 
 # OPTIONS
 
-**-d, \-\-duplicates**  
-List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images
+`-d, --duplicates`
+: List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images
           
-**-u, \-\-uniques**  
-List only the best (highest resolution) version of each valid image without listing any duplicates
+`-u, --uniques`
+: List only the best (highest resolution) version of each valid image without listing any duplicates
           
-**-a, \-\-all**  
-By default photodedupe lists only images that have duplicates. This option causes all valid image files to be listed (except those below the minimum resolution if \-\-min-resolution is used) regardless of whether the file has a duplicate
+`-a, --all`
+: By default photodedupe lists only images that have duplicates. This option causes all valid image files to be listed (except those below the minimum resolution if \-\-min-resolution is used) regardless of whether the file has a duplicate
           
-**-c, \-\-compare \<directory of new images\>**  
-Compares a directory of new images (supplied as the parameter to \-\-compare) with one or more directories comprising an existing image collection (supplied as arguments). Tests whether each of the new images are duplicates of the existing image collection or unique depending on use of either the \-\-duplicates or \-\-uniques options respectively. When used with \-\-duplicates, new images are classified as unique when of higher resolution than the version in the existing image collection. To mark similar images as duplicates in all circumstances (irrespective of resolution), additionally apply the \-\-ignore-resolution option
+`-c, --compare <directory of new images>` 
+: Compares a directory of new images (supplied as the parameter to \-\-compare) with one or more directories comprising an existing image collection (supplied as arguments). Tests whether each of the new images are duplicates of the existing image collection or unique depending on use of either the \-\-duplicates or \-\-uniques options respectively. When used with \-\-duplicates, new images are classified as unique when of higher resolution than the version in the existing image collection. To mark similar images as duplicates in all circumstances (irrespective of resolution), additionally apply the \-\-ignore-resolution option
           
-**\-\-ignore-resolution**  
-When using \-\-compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality
+`--ignore-resolution`
+: When using \-\-compare always mark duplicates even the new image is better quality. Do not mark as unique even if better quality
           
-**\-\-min-resolution \<WidthxHeight\>**  
-Ignore all images of less than the specified resolution e.g. \-\-min-resolution 300x200 will ignore images if either the width is less than 300 pixels or the height is less than 200 pixels
+`--min-resolution <WidthxHeight>`
+: Ignore all images of less than the specified resolution e.g. \-\-min-resolution 300x200 will ignore images if either the width is less than 300 pixels or the height is less than 200 pixels
           
-**-y, \-\-any-file**  
-Tests every file to see if it might be an image regardless of file extension. Also allows image files with no extension. The default behaviour is to only test files with common image filename extensions which are jpg,jpeg,png,tif,tiff,gif and webp
+`-y, --any-file`
+: Tests every file to see if it might be an image regardless of file extension. Also allows image files with no extension. The default behaviour is to only test files with common image filename extensions which are jpg,jpeg,png,tif,tiff,gif and webp
           
-**\-\-force-colour-diff-only**  
-Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images. This algorithm is used by default with 50,000 or fewer images. Beyond this number of images, a different perceptual hash algorithm is used than is slightly less accurate but is much faster.
+`--force-colour-diff-only`
+: Only use the colour difference algorithm. This is more accurate but does not perform well with large numbers of images. This algorithm is used by default with 50,000 or fewer images. Beyond this number of images, a different perceptual hash algorithm is used that is slightly less accurate but is much faster.
           
-**-t, \-\-threads \<number of threads\>**  
-Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available
+`-t, --threads <number of threads>`
+: Number of CPU threads to use (default is 4). Higher number improves performance if more than 4 CPU threads are available
           
-**\-\-colour-diff-threshold \<threshold\>**  
-Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)
+`--colour-diff-threshold <threshold>`
+: Colour difference threshold. Higher value means more likely to consider images duplicates (Min:0,Max:49000,Default:256)
           
-**-g, \-\-debug**  
-Expects either one or two image file arguments. Where one file is supplied, prints statistics about the file. Where two are supplied prints statistics and information about the differences found between the files
+`-g, --debug`
+: Expects either one or two image file arguments. Where one file is supplied, prints statistics about the file. Where two are supplied prints statistics and information about the differences found between the files
           
-**-h, \-\-help**  
-Print help
+`-h, --help`
+: Print help
           
-**-V, \-\-version**  
-Print version
+`-V, --version`
+: Print version
 
 # EXAMPLE USAGE
 

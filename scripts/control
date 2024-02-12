@@ -1,0 +1,6 @@
+Package: photodedupe
+Version: 1.0.0
+Architecture: amd64
+Maintainer: LJ Bubb
+Description: A utility for identifying duplicate photos regardless of scale or file format.
+ Source: https://github.com/InexplicableMagic/photodedupe
