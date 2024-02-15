@@ -1,15 +1,15 @@
 # Photodedupe
 **Photodedupe** is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have differing file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication. 
 
-Where duplicates are identified, the images are sorted by resolution such that the largest version of each image appears first. It is possible to list only the highest resolution versions of all images, or alternatively to list only the duplicates (lower resolution versions). This enables the best copies of images to be extracted from a photo collection or the duplicates to be removed. This sort order is helpful for applications such as removing thumbnails from image collections or separating scaled web resolution images from the original high resolution version.
+Where duplicates are identified, the images are sorted by resolution such that the largest version of each image appears first. It is possible to list only the highest resolution versions of all images, or alternatively to list only the duplicates (lower resolution versions). This allows the best quality images to be extracted from a photo collection or the duplicates removed. Sorting in this way is helpful for applications such as removing thumbnails from image collections or separating scaled web resolution images from the original high resolution version.
 
-The output is a list of file paths that can be piped to other commands such that the required images can be sorted into folders (example usage below). Photodedupe can work with large image collections of hundreds of thousands or millions of images and scales to any number of CPU cores.
+The output is a list of file paths that can be piped to other commands such that the required images can be organised into folders (example usage below). Photodedupe can work with large image collections of hundreds of thousands or millions of images and scales to any number of CPU cores.
 
 <p align="center"><img src="docs/photodedupe_readme_scaling_diagram.png" width="600" /></p>
 
 ## Downloads / Builds
 
-Builds of photodedupe for x86 Linux, Windows and Raspberry Pi (32-bit) are available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases/).
+Builds of photodedupe for x86 Linux, Windows and Raspberry Pi are available for download from the [releases page](https://github.com/InexplicableMagic/photodedupe/releases/).
 
 ## Usage
 
@@ -45,7 +45,7 @@ To list every image file found regardless of whether it has a duplicate use the 
 
 To list only the highest resolution version of each image use the ```--uniques``` option. The output will include images that do not have any duplicates. This option could be used to copy the highest resolution version of each image to a different directory. 
 
-In this example photodedupe is outputting a list of filenames of the best versions of each image on stdout. The xargs command reads each filename, substitues it for the two braces and executes the provided command. This then causes each listed file to be copied to the specified directory.
+In the below example photodedupe outputs a list of filenames of the best versions of each image on stdout. The xargs command reads each filename, substitues it for the two braces and executes the provided command. This then causes each listed file to be copied to the specified directory.
 
 ```photodedupe --uniques dir_of_photos/ | xargs -i cp "{}" unique_best_versions_dir/```
 
@@ -60,9 +60,9 @@ Photos below a user specified resolution can be ignored. In the following exampl
 
 ````photodedupe dir_of_photos/ --min-resolution 150x100````
 
-## Image Directory Diff
+## Comparing Image Directories
 
-The feature enables a directory of new images to be compared against a pre-existing collection of photos to determine if any of the new images already appear in the collection. This can be used to update a photo collection with new unique images derived from a new source. An example application might be for use with a web scraper that periodically downloads all the images from a regularly updated web page. This option can be used to determine if any of the most recently downloaded images are new or if they were downloaded on a previous occasion.
+This feature enables a directory of new images to be compared against a pre-existing collection of photos to determine if any of the new images already appear in the collection. This can be used to update a photo collection with new unique images derived from a new source. An example application might be for use with a web scraper that periodically downloads all the images from a regularly updated web page. This option can be used to determine if any of the most recently downloaded images are new or if they were downloaded on a previous occasion.
 
 To identify which of the new images already exist in your collection pass the directory of new images to be tested to the ``--compare`` option, then supply one or more paths to the pre-existing photo collection as arguments. 
 

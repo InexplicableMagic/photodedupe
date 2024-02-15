@@ -2,14 +2,13 @@
 name = "photodedupe"
 version = "1.0.0"
 authors = ["LJ Bubb"]
-edition = "2018"
-
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
+license = "MIT"
+description = "A utility for identifying duplicate photos"
 
 [dependencies]
 image = "0.24.8"
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 clap = { version = "4.5.0", features = ["derive"] }
 walkdir = "2.4.0"
 threadpool = "1.8.1"
