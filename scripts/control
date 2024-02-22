@@ -1,6 +1,13 @@
 Package: photodedupe
-Version: 1.0.0
+Version: 1.0.1
+Priority: optional
+Section: utils
 Architecture: amd64
-Maintainer: LJ Bubb
-Description: A utility for identifying duplicate photos regardless of scale or file format.
- Source: https://github.com/InexplicableMagic/photodedupe
+Maintainer: LJ Bubb <photodedupe@leoncode.co.uk>
+Depends: libc6 (>= 2.34), libgcc-s1 (>= 4.2)
+Homepage: https://github.com/InexplicableMagic/photodedupe
+Description: Identifies duplicate photos regardless of scale or file format.
+ Photodedupe is a command line utility for identifying duplicate photos 
+ regardless of whether the images have been scaled or have differing
+ file formats. It compares the image content visually and does not rely
+ on metadata or file hashes to perform the de-duplication.

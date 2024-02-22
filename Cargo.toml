@@ -1,6 +1,6 @@
 [package]
 name = "photodedupe"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["LJ Bubb"]
 edition = "2021"
 license = "MIT"
@@ -14,3 +14,6 @@ walkdir = "2.4.0"
 threadpool = "1.8.1"
 indicatif = "0.17.8"
 glob = "0.3.1"
+
+[profile.release]
+strip = "debuginfo"

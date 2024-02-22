@@ -1,4 +1,4 @@
-% photodedupe(1) Version 1.0.0
+% photodedupe(1) Version 1.0.1
 # NAME
 photodedupe - a command line utility for identifying duplicate photos
 

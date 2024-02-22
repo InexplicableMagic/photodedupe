@@ -5,7 +5,7 @@ Where duplicates are identified, the images are sorted by resolution such that t
 
 The output is a list of file paths that can be piped to other commands such that the required images can be organised into folders (example usage below). Photodedupe can work with large image collections of hundreds of thousands or millions of images and scales to any number of CPU cores.
 
-<p align="center"><img src="docs/photodedupe_readme_scaling_diagram.png" width="600" /></p>
+<p align="center"><img src="docs/readme_images/photodedupe_readme_scaling_diagram.png" width="600" /></p>
 
 ## Downloads / Builds
 
@@ -128,7 +128,7 @@ cargo build --target x86_64-pc-windows-gnu --release
 To generate the man page from the markdown source:
 
 ```
-cd docs
+cd docs/man_page
 pandoc --standalone --to man man_page_source.md -o photodedupe.1
 ```
 
