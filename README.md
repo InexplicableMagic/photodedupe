@@ -113,6 +113,7 @@ The internal threshold at which a duplicate is detected can be be tuned using th
 
 ## Building
 
+## building from source
 To build for the current architecture (e.g. build for Linux when using a Linux machine):
 
 ```cargo build --release```
@@ -131,4 +132,5 @@ To generate the man page from the markdown source:
 cd docs/man_page
 pandoc --standalone --to man man_page_source.md -o photodedupe.1
 ```
-
+## building for debian
+TODO
