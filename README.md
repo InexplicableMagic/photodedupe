@@ -133,4 +133,21 @@ cd docs/man_page
 pandoc --standalone --to man man_page_source.md -o photodedupe.1
 ```
 ## building for debian
-TODO
+dependencies for debian
+python3?
+lintian?
+
+cargo
+rustc
+libstd-rust-dev
+librust-clap-dev (4.5.23-1 amd64)
+librust-clap-derive-dev (4.5.18-1 amd64)
+librust-glob-dev/stable 0.3.2-1 amd64
+librust-image-dev  stable 0.25.5-3 amd64
+librust-indicatif-dev/stable 0.17.8-1 amd64
+librust-thiserror-dev/
+librust-thiserror-impl-dev/stable 2.0.11-1 amd64 ?
+librust-threadpool-dev/stable 1.8.1-1+b2 amd64 ?
+librust-walkdir-dev/stable 2.5.0-1 amd64
+
+TODO: buils instruction
