@@ -150,4 +150,4 @@ librust-thiserror-impl-dev/stable 2.0.11-1 amd64 ?
 librust-threadpool-dev/stable 1.8.1-1+b2 amd64 ?
 librust-walkdir-dev/stable 2.5.0-1 amd64
 
-TODO: buils instruction
+TODO: build instruction
