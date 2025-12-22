@@ -129,15 +129,15 @@ To determine where specifically the images in the new images directory appear in
 
 ### EXAMPLE BEHAVIOUR OF \-\-compare
 
-In the example below the directory "new_images" is passed to the ```--compare``` option and the ```--duplicates``` flag is used. The existing_collection directory is passed as an argument. All of the images in the below table are visually duplicates of each other:
+In the example below the directory "new_images" is passed to the ```--compare``` option and the ```--duplicates``` flag is used. The collection directory is passed as an argument. All of the images in the below table are visually duplicates of each other:
 
 |File|Resolution|Shown As Duplicate?|
 |----|----------|------------------|
 |new_images/image\_dupe\_1.jpg|5 MP|No|
-|existing_collection/image\_dupe\_2.jpg|4 MP|No|
+|collection/image\_dupe\_2.jpg|4 MP|No|
 |new_images/image\_dupe\_3.jpg|3 MP|Yes|
-|existing_collection/image\_dupe\_4.jpg|2 MP|No|
-|existing_collection/image\_dupe\_5.jpg|1 MP|No|
+|collection/image\_dupe\_4.jpg|2 MP|No|
+|collection/image\_dupe\_5.jpg|1 MP|No|
 
 Image\_dupe\_1 is not shown as a duplicate because at 5 megapixels it exceeds the resolution of the best copy in the existing collection (Image\_dupe\_2), which is only 4 MP. Image\_dupe\_3 is displayed as a duplicate because at 3MP it is below the resolution of the best copy in the existing collection. Image\_dupe\_4 and Image\_dupe\_5 are not shown because they are in the existing collection and not in the new images directory.
 
