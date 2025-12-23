@@ -12,7 +12,8 @@ Build-Depends: python3 (>= 3.13),
                librust-thiserror-dev (>= 2.0),
                librust-thiserror-impl-dev (>= 2.0),
                librust-threadpool-dev (>= 1.8),
-               librust-walkdir-dev (>= 2.5)
+               librust-walkdir-dev (>= 2.5),
+               build-essential (>= 12.12)
 
 Package: photodedupe
 Priority: optional
