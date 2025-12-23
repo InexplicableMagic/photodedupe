@@ -8,7 +8,7 @@ description = "A utility for identifying duplicate photos"
 
 [dependencies]
 image = "0.25.5"
-thiserror = "1.0.57"
+thiserror = "2.0.11"
 clap = { version = "4.5.0", features = ["derive"] }
 walkdir = "2.4.0"
 threadpool = "1.8.1"
