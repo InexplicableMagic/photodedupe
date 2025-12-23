@@ -1,8 +1,20 @@
 source: photodedupe
 Maintainer: kazantsev mikhail <kazan417@mail.ru>
+Build-Depends: python3 (>= 3.13),
+               lintian (>= 2.122),
+               cargo (>=1.85),
+               libstd-rust-dev (>=1.85),
+               librust-clap-dev (>= 4.5),
+               librust-clap-derive-dev (>= 4.5),
+               librust-glob-dev (>= 0.3),
+               librust-image-dev (>= 0.25),
+               librust-indicatif-dev (>= 0.17),
+               librust-thiserror-dev (>= 2.0),
+               librust-thiserror-impl-dev (>= 2.0),
+               librust-threadpool-dev (>= 1.8),
+               librust-walkdir-dev (>= 2.5)
 
 Package: photodedupe
-Version: 1.0.1
 Priority: optional
 Section: utils
 Architecture: amd64
