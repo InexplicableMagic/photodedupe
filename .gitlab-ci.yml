@@ -1,0 +1,28 @@
+stages:
+  - build
+
+build-deb-package:
+  stage: build
+  # Use an official Debian or Ubuntu image as the base environment
+  image: debian:stable
+  script:
+    # Update apt lists and install the required build dependencies
+    - apt-get update && apt-get install -y build-essential devscripts gnupg
+    # Install the specific build dependencies for the package defined in debian/control
+    - apt-get build-dep -y .
+    # Execute dpkg-buildpackage command
+    # -us: do not sign the source package
+    # -uc: do not sign the changes file
+    - dpkg-buildpackage -us -uc
+    # Create a directory for the artifacts and move the generated files there
+    - mkdir build
+    - mv ../*.deb build/
+    - mv ../*.changes build/
+    - mv ../*.buildinfo build/
+  artifacts:
+    expire_in: 1 week
+    paths:
+      # Upload the built packages as job artifacts
+      - build/*.deb
+      - build/*.changes
+      - build/*.buildinfo
