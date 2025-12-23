@@ -1,6 +1,6 @@
 [package]
 name = "photodedupe"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["LJ Bubb"]
 edition = "2021"
 license = "MIT"
