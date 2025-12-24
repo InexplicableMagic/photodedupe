@@ -26,4 +26,3 @@ execute_before_dh_auto_configure:
 	touch debian/cargo-checksum.json
 
 #execute_after_dh_auto_build:
-#	scdoc < contrib/man/tuigreet-1.scd > contrib/man/tuigreet.1
