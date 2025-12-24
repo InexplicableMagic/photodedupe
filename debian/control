@@ -14,7 +14,8 @@ Build-Depends: python3 (>= 3.13),
                librust-threadpool-dev (>= 1.8),
                librust-walkdir-dev (>= 2.5),
                dh-cargo (>= 32),
-               debhelper (>= 13.24)
+               debhelper (>= 13.24),
+               pandoc (>=3.1)
 Standards-Version: 4.7.0
 
 Package: photodedupe
@@ -22,6 +23,9 @@ Priority: optional
 Section: utils
 Architecture: amd64
 Depends:  ${shlibs:Depends}, libgcc-s1 (>= 4.2), ${misc:Depends} 
+Built-Using: ${cargo:Built-Using}
+X-Cargo-Built-Using: ${cargo:X-Cargo-Built-Using}
+Static-Built-Using: ${cargo:Static-Built-Using}
 Homepage: https://github.com/InexplicableMagic/photodedupe
 Description: Identifies duplicate photos regardless of scale or file format.
  Photodedupe is a command line utility for identifying duplicate photos 

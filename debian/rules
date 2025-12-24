@@ -25,4 +25,8 @@ execute_before_dh_auto_configure:
 	rm -f Cargo.lock
 	touch debian/cargo-checksum.json
 
-#execute_after_dh_auto_build:
+execute_before_dh_installman:
+	mkdir -p $(CURDIR)/debian/tmp
+	pandoc --standalone --to man $(CURDIR)/docs/man_page/man_page_source.md -o $(CURDIR)/debian/tmp/photodedupe.1 
+execute_after_dh_auto_clean:
+	rm -rf $(CURDIR)/debian/tmp

@@ -5,6 +5,7 @@ Cargo.lock
 *.deb
 cargo_home/
 cargo_registry/
+/debian/tmp/
 /debian/photodedupe/
 /debian/debhelper-build-stamp
 /debian/files
