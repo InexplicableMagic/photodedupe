@@ -21,7 +21,7 @@ Package: photodedupe
 Priority: optional
 Section: utils
 Architecture: amd64
-Depends: libc6 (>= 2.34), libgcc-s1 (>= 4.2), ${misc:Depends} 
+Depends:  ${shlibs:Depends}, libgcc-s1 (>= 4.2), ${misc:Depends} 
 Homepage: https://github.com/InexplicableMagic/photodedupe
 Description: Identifies duplicate photos regardless of scale or file format.
  Photodedupe is a command line utility for identifying duplicate photos 
