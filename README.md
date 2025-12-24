@@ -142,4 +142,4 @@ You can build this package on debian 13 or similar by running this steps:
 `dpkg-buildpackage -us -uc`
 
 4. install builded debian package 
-`apt install ../photodedupe_1.0.2_amd64.deb`
+`sudo apt install ../photodedupe_1.0.2_amd64.deb`
