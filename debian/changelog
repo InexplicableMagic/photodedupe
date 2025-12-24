@@ -4,7 +4,7 @@ photodedupe (1.0.2) unstable; urgency=low
     - Improvements to pass lintian checks
     - Transforming sources from scripts to native debian build system
     - Updated dependencies to new compatible with debian 13 local packages
- -- Mikhail Kazantsev <kazan417@gmail.com>  Wed, 23 Dec 2025 18:00:00 -0000
+ -- Mikhail Kazantsev <kazan417@gmail.com>  Tue, 23 Dec 2025 18:00:00 -0000
 
 
 photodedupe (1.0.1) unstable; urgency=low
