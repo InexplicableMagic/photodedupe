@@ -19,6 +19,7 @@ execute_after_dh_auto_clean:
 	rm -rf $(CARGO_HOME)
 	rm -rf $(CARGO_REGISTRY)
 	rm -f debian/cargo-checksum.json
+	rm -rf $(CURDIR)/debian/tmp
 
 execute_before_dh_auto_configure:
 	$(CARGO) prepare-debian $(CARGO_REGISTRY) --link-from-system
@@ -28,5 +29,3 @@ execute_before_dh_auto_configure:
 execute_before_dh_installman:
 	mkdir -p $(CURDIR)/debian/tmp
 	pandoc --standalone --to man $(CURDIR)/docs/man_page/man_page_source.md -o $(CURDIR)/debian/tmp/photodedupe.1 
-execute_after_dh_auto_clean:
-	rm -rf $(CURDIR)/debian/tmp
