@@ -1,4 +1,4 @@
-photodedupe (1.0.2) unstable; urgency=low
+photodedupe (1.0.2+deb13u1) unstable; urgency=low
 
   * Corrections for Debian installer:
     - Improvements to pass lintian checks

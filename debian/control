@@ -1,7 +1,7 @@
 source: photodedupe
 Priority: optional
 Section: utils
-Maintainer: kazantsev mikhail <kazan417@mail.ru>
+Maintainer: Mikhail Kazantsev <kazan417@gmail.com>
 Build-Depends: python3 (>= 3.13),
                lintian (>= 2.122),
                cargo (>=1.85),
