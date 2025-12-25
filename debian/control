@@ -1,4 +1,6 @@
 source: photodedupe
+Priority: optional
+Section: utils
 Maintainer: kazantsev mikhail <kazan417@mail.ru>
 Build-Depends: python3 (>= 3.13),
                lintian (>= 2.122),
