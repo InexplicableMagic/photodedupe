@@ -4,6 +4,14 @@ photodedupe (1.0.2+deb13u1) unstable; urgency=low
     - Improvements to pass lintian checks
     - Transforming sources from scripts to native debian build system
     - Updated dependencies to new compatible with debian 13 local packages
+ -- Mikhail Kazantsev <kazan417@gmail.com>  Thu, 25 Dec 2025 22:00:00 -0000
+
+photodedupe (1.0.2) unstable; urgency=low
+
+  * Corrections for Debian installer:
+    - replace hardcode verson number with env var from Cargo.toml
+    - Updated depricated metod
+    - Updated dependencies to new compatible with debian 13 local packages
  -- Mikhail Kazantsev <kazan417@gmail.com>  Tue, 23 Dec 2025 18:00:00 -0000
 
 
