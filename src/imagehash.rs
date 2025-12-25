@@ -3,7 +3,7 @@ extern crate image;
 use std::cmp::Ordering;
 use image::{GenericImageView, DynamicImage};
 use image::imageops::FilterType;
-use image::io::Reader;
+use image::ImageReader;
 use std::fs;
 
 use crate::image_error::MyImageError;
@@ -158,7 +158,7 @@ impl PartialEq for ImageHashAV {
 fn load_image_from_file( image_path: &str  ) -> std::result::Result<DynamicImage, MyImageError> {
 	
 	
-	let img = match Reader::open(image_path) {
+	let img = match ImageReader::open(image_path) {
 		Ok(image) => image,
 		Err(_) => {
 			return Err(MyImageError::FileError(format!("Error: Failed to read image file: {}", image_path).to_string()));
