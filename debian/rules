@@ -28,4 +28,4 @@ execute_before_dh_auto_configure:
 
 execute_before_dh_installman:
 	mkdir -p $(CURDIR)/debian/tmp
-	pandoc --standalone --to man $(CURDIR)/docs/man_page/man_page_source.md -o $(CURDIR)/debian/tmp/photodedupe.1 
+	pandoc --standalone --to man $(CURDIR)/docs/man_page/man_page_source.md -o $(CURDIR)/debian/tmp/photodedupe.1

@@ -1,4 +1,4 @@
-source: photodedupe
+Source: photodedupe
 Priority: optional
 Section: utils
 Maintainer: Mikhail Kazantsev <kazan417@gmail.com>
@@ -24,13 +24,13 @@ Package: photodedupe
 Priority: optional
 Section: utils
 Architecture: amd64
-Depends:  ${shlibs:Depends}, libgcc-s1 (>= 4.2), ${misc:Depends} 
+Depends: ${shlibs:Depends}, libgcc-s1 (>= 4.2), ${misc:Depends}
 Built-Using: ${cargo:Built-Using}
 X-Cargo-Built-Using: ${cargo:X-Cargo-Built-Using}
 Static-Built-Using: ${cargo:Static-Built-Using}
 Homepage: https://github.com/InexplicableMagic/photodedupe
 Description: Identifies duplicate photos regardless of scale or file format.
- Photodedupe is a command line utility for identifying duplicate photos 
+ Photodedupe is a command line utility for identifying duplicate photos
  regardless of whether the images have been scaled or have differing
  file formats. It compares the image content visually and does not rely
  on metadata or file hashes to perform the de-duplication.
