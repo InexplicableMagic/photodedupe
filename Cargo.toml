@@ -1,7 +1,7 @@
 [package]
 name = "photodedupe"
 version = "1.0.2"
-authors = ["LJ Bubb"]
+authors = ["LJ Bubb, Mikhail Kazantsev"]
 edition = "2021"
 license = "MIT"
 description = "A utility for identifying duplicate photos"
