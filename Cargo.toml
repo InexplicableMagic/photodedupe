@@ -5,7 +5,10 @@ authors = ["LJ Bubb"]
 edition = "2021"
 license = "MIT"
 description = "A utility for identifying duplicate photos"
-
+homepage = "https://github.com/InexplicableMagic/photodedupe"
+repository = "https://github.com/InexplicableMagic/photodedupe"
+readme = "README.md"
+keywords = ["images", "duplicate"]
 [dependencies]
 image = "0.25.5"
 thiserror = "2.0.11"
