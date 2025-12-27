@@ -1,7 +1,7 @@
 [package]
 name = "photodedupe"
 version = "1.0.2"
-authors = ["LJ Bubb, Mikhail Kazantsev"]
+authors = ["LJ Bubb", "Mikhail Kazantsev"]
 edition = "2021"
 license = "MIT"
 description = "A utility for identifying duplicate photos"
@@ -9,6 +9,10 @@ homepage = "https://github.com/InexplicableMagic/photodedupe"
 repository = "https://github.com/InexplicableMagic/photodedupe"
 readme = "README.md"
 keywords = ["images", "duplicate"]
+exclude = [
+"debian",
+"unit_test_images"  
+]
 [dependencies]
 image = "0.25.5"
 thiserror = "2.0.11"
@@ -20,3 +24,4 @@ glob = "0.3.2"
 
 [profile.release]
 strip = "debuginfo"
+
