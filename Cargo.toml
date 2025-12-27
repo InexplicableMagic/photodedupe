@@ -11,7 +11,8 @@ readme = "README.md"
 keywords = ["images", "duplicate"]
 exclude = [
 "debian",
-"unit_test_images"  
+"unit_test_images",
+"docs"
 ]
 [dependencies]
 image = "0.25.5"
