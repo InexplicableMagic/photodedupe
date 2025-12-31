@@ -32,7 +32,7 @@ mod image_error;
 
 /// PhotoDedupe: A utility for detecting duplicate photos in a collection of images
 #[derive(Parser, Debug)]
-#[command(version="1.0.1")]
+#[command(version=env!("CARGO_PKG_VERSION"))]
 struct Args {
     
     /// List only the detected duplicate images. Excludes the highest resolution version of each image. Excludes unique images.
