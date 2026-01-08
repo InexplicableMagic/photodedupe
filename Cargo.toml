@@ -1,6 +1,6 @@
 [package]
 name = "photodedupe"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["LJ Bubb <photodedupe@leoncode.co.uk>", "Mikhail Kazantsev <kazan417@gmail.com>"]
 edition = "2021"
 license = "MIT"
