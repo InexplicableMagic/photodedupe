@@ -10,7 +10,7 @@ repository = "https://github.com/InexplicableMagic/photodedupe"
 readme = "README.md"
 categories = ["command-line-utilities", "multimedia::images"]
 keywords = ["images", "duplicate"]
-exclude = ["debian"]
+exclude = ["debian","unit_test_images"]
 [dependencies]
 image = "=0.25.5"
 thiserror = "2.0.11"
