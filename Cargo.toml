@@ -27,3 +27,4 @@ section = "utility"
 priority = "optional"
 separate-debug-symbols = "true"
 copyright = ["2021-2026, LJ Bubb <photodedupe@leoncode.co.uk>", "2025-2025, Mikhail Kazantsev <kazan417@gmail.com>"]
+license-file = "LICENSE-MIT"
