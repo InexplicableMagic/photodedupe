@@ -10,4 +10,5 @@ cargo_registry/
 /debian/debhelper-build-stamp
 /debian/files
 /debian/photodedupe.substvars
+/debian/*.log
 !.cargo/config.toml

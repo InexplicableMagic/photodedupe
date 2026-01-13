@@ -5,3 +5,7 @@
 execute_before_dh_installman:
 	mkdir -p $(CURDIR)/debian/tmp
 	pandoc --standalone --to man $(CURDIR)/docs/man_page/man_page_source.md -o $(CURDIR)/debian/tmp/photodedupe.1
+#supress warnings caused by broken dpkg-shlibdeps while dealing with MergedUsr
+#https://wiki.debian.org/Teams/Dpkg/MergedUsr
+override_dh_shlibdeps:
+	dh_shlibdeps 2>/dev/null 
