@@ -10,11 +10,6 @@ Copyright:
  2021 - 2026 LJ Bubb <photodedupe@leoncode.co.uk>
  2025 - 2026 Mikhail Kazantsev <kazan417@gmail.com>
 License: MIT
-Comment:
- FIXME (overlay): Since upstream copyright years are not available in
- Cargo.toml, they were extracted from the upstream Git repository. This may not
- be correct information so you should review and fix this before uploading to
- the archive.
 
 Files: debian/*
 Copyright:
