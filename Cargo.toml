@@ -1,6 +1,6 @@
 [package]
 name = "photodedupe"
-version = "1.0.5"
+version = "1.0.6"
 authors = ["LJ Bubb <photodedupe@leoncode.co.uk>", "Mikhail Kazantsev <kazan417@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -12,7 +12,7 @@ categories = ["command-line-utilities", "multimedia::images"]
 keywords = ["images", "duplicate"]
 exclude = ["debian","unit_test_images"]
 [dependencies]
-image = "=0.25.5"
+image = ">=0.25.5, <=0.25.8"
 thiserror = "2.0.11"
 clap = { version = "4.5.0", features = ["derive"] }
 walkdir = "2.4.0"
