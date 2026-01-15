@@ -6,6 +6,5 @@ section = "utils"
 test_is_broken = true
 depends = ["pandoc (>= 3.1)"]
 [packages.bin]
-section="utils"
 summary = "Utility for identifying duplicate photos"
-description = "Identifies duplicate photos regardless of scale or file format. Photodedupe is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have differing file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication."
+description ="Photodedupe is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have different file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication."
