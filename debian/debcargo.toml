@@ -1,0 +1,8 @@
+overlay = "."
+uploaders = ["Mikhail Kazantsev <kazan417@gmail.com>"]
+[source]
+section = "utils"
+build_depends = ["pandoc (>= 3.1)"]
+[packages.bin]
+summary = "Utility for identifying duplicate photos"
+description ="Photodedupe is a command line utility for identifying duplicate photos regardless of whether the images have been scaled or have different file formats. It compares the image content visually and does not rely on metadata or file hashes to perform the de-duplication."

@@ -1,13 +1,23 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: photodedupe
-Upstream-Contact: LJ Bubb <photodedupe@leoncode.co.uk>
+Upstream-Contact:
+ LJ Bubb <photodedupe@leoncode.co.uk>
+ Mikhail Kazantsev <kazan417@gmail.com>
+Source: https://github.com/InexplicableMagic/photodedupe
+
 Files: *
-Copyright: 2021-2024 LJ Bubb <photodedupe@leoncode.co.uk>
+Copyright:
+ 2021 - 2026 LJ Bubb <photodedupe@leoncode.co.uk>
+ 2025 - 2026 Mikhail Kazantsev <kazan417@gmail.com>
 License: MIT
- The MIT License (MIT)
- .
- Copyright © 2021 - 2024 LJ Bubb
- .
+
+Files: debian/*
+Copyright:
+ 2026 Debian Rust Maintainers <pkg-rust-maintainers@alioth-lists.debian.net>
+ 2026 Mikhail Kazantsev <kazan417@gmail.com>
+License: MIT
+
+License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
@@ -20,7 +30,7 @@ License: MIT
  .
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
