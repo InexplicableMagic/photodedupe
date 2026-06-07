@@ -113,16 +113,15 @@ The internal threshold at which a duplicate is detected can be be tuned using th
 
 ## Building
 
-## Building from Source
+### Building from Source
 
-### Build for the Current Architecture
 To build for your current operating system (e.g. building for Linux while on a Linux machine):
 
 ```bash
 cargo build --release
 ```
 
-### Cross-Compile for Windows from Linux
+#### Cross-Compile for Windows from Linux
 If you are on a Windows machine, simply use the standard build command above. If you are on Linux and want to cross-compile a Windows binary, run:
 
 ```bash
@@ -136,14 +135,14 @@ rustup target add x86_64-pc-windows-gnu
 cargo build --target x86_64-pc-windows-gnu --release
 ```
 
-### Generate the Man Page
+#### Generate the Man Page
 To generate the man page documentation from the Markdown source:
 
 ```bash
 cd docs/man_page
 pandoc --standalone --to man man_page_source.md -o photodedupe.1
 ```
-## Building for Debian
+### Building for Debian
 
 You can build the package on Debian 13 or similar by running these steps:
 
