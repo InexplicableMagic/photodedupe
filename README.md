@@ -114,31 +114,59 @@ The internal threshold at which a duplicate is detected can be be tuned using th
 ## Building
 
 ## Building from Source
-To build for the current architecture (e.g. build for Linux when using a Linux machine):
 
-```cargo build --release```
+### Build for the Current Architecture
+To build for your current operating system (e.g. building for Linux while on a Linux machine):
 
-To build for Windows from Linux (use the above command to build for Windows when on Windows):
-
+```bash
+cargo build --release
 ```
+
+### Cross-Compile for Windows from Linux
+If you are on a Windows machine, simply use the standard build command above. If you are on Linux and want to cross-compile a Windows binary, run:
+
+```bash
+# Install the MinGW compiler toolchain
 sudo apt-get install mingw-w64
+
+# Add the Windows compilation target to Rust
 rustup target add x86_64-pc-windows-gnu
+
+# Build the release binary for Windows
 cargo build --target x86_64-pc-windows-gnu --release
 ```
 
-To generate the man page from the markdown source:
+### Generate the Man Page
+To generate the man page documentation from the Markdown source:
 
-```
+```bash
 cd docs/man_page
 pandoc --standalone --to man man_page_source.md -o photodedupe.1
 ```
 ## Building for Debian
-You can build the package on debian 13 or similar by running these steps:
-1. Update system and install necessary packages by running
-`sudo apt-get update && apt-get install -y build-essential devscripts gnupg` 
-2. Install the specific build dependencies for the package defined in debian/control 
-`sudo apt-get build-dep -y`
-3.  Build debian package 
-`dpkg-buildpackage -us -uc`
-4. install builded debian package 
-`sudo apt install ../photodedupe_1.0.2_amd64.deb`
+
+You can build the package on Debian 13 or similar by running these steps:
+
+1. Update the system and install necessary packages:
+
+    ```bash
+    sudo apt-get update && apt-get install -y build-essential devscripts gnupg
+    ```
+
+2. Install the specific build dependencies for the package defined in `debian/control`:
+
+    ```bash
+    sudo apt-get build-dep -y
+    ```
+
+3. Build the Debian package:
+
+    ```bash
+    dpkg-buildpackage -us -uc
+    ```
+
+4. Install the generated Debian package:
+
+    ```bash
+    sudo apt install ../photodedupe_1.0.7_amd64.deb
+    ```
